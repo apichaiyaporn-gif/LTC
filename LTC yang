@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3C Plus+ Care Plan &amp; LTC Command Center — รพ.สต.ยางสว่าง</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background: radial-gradient(circle at 20% 10%, #1E293B 0%, #0F172A 50%, #172554 100%);
+      color: #0F172A;
+    }
+    h1, h2, h3, .font-heading { font-family: 'Prompt', sans-serif; }
+    .bento-card {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 1.75rem;
+      box-shadow: 0 12px 32px -8px rgba(2, 6, 23, 0.35), 0 2px 6px rgba(2, 6, 23, 0.12);
+    }
+    .cc-tile-yellow {
+      background: linear-gradient(145deg, #FDE047 0%, #FACC15 100%);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 1.75rem;
+      box-shadow: 0 12px 28px -6px rgba(250, 204, 21, 0.28);
+      color: #0F172A;
+    }
+    .cc-tile-red {
+      background: linear-gradient(145deg, #EF4444 0%, #DC2626 100%);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 1.75rem;
+      box-shadow: 0 12px 28px -6px rgba(220, 38, 38, 0.32);
+      color: #FFFFFF;
+    }
+    .cc-tile-blue {
+      background: linear-gradient(145deg, #3B82F6 0%, #2563EB 100%);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 1.75rem;
+      box-shadow: 0 12px 28px -6px rgba(37, 99, 235, 0.32);
+      color: #FFFFFF;
+    }
+    .cc-tile-slate {
+      background: linear-gradient(145deg, #E2E8F0 0%, #CBD5E1 100%);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 1.75rem;
+      box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.25);
+      color: #0F172A;
+    }
+    .cc-circle-btn {
+      box-shadow: 0 4px 12px rgba(2, 6, 23, 0.18);
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+    .cc-circle-btn:hover { transform: translateY(-1px); filter: brightness(1.04); }
+    .copy-btn:active { transform: scale(0.96); }
+    .tab-active {
+      background: #FACC15;
+      color: #0F172A;
+      box-shadow: 0 8px 20px -4px rgba(250, 204, 21, 0.45);
+    }
+    .tab-inactive {
+      background: rgba(226, 232, 240, 0.92);
+      color: #0F172A;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+    .scrollbar-thin::-webkit-scrollbar { height: 8px; width: 8px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: #E2E8F0; border-radius: 9999px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #64748B; border-radius: 9999px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #475569; }
+    @keyframes scanLine {
+      0% { transform: translateY(0%); opacity: 0.2; }
+      50% { opacity: 1; }
+      100% { transform: translateY(100%); opacity: 0.2; }
+    }
+    .animate-scan-line { animation: scanLine 2.2s ease-in-out infinite alternate; }
+    @media print {
+      @page { size: A4 portrait; margin: 12mm 12mm 14mm 12mm; }
+      body { background: #FFFFFF !important; color: #000000 !important; font-size: 12px !important; }
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      .bento-card, .cc-tile-yellow, .cc-tile-blue, .cc-tile-red, .cc-tile-slate {
+        box-shadow: none !important; border: 1px solid #CBD5E1 !important; background: #FFFFFF !important; color: #000000 !important;
+      }
+      .print-break-before { page-break-before: always; }
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased">
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden items-center gap-2.5 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-medium text-white shadow-xl transition-all">
+    <i data-lucide="check-circle-2" class="h-4 w-4 text-emerald-400"></i>
+    <span id="toastText">คัดลอกข้อมูลแล้ว</span>
+  </div>
+
+  <!-- Top App Bar -->
+  <div class="hidden print-only border-b-2 border-slate-900 pb-3 mb-4"><div class="flex items-center justify-between"><div><h1 class="text-lg font-bold">รายงานผลการวิเคราะห์แบบประเมิน Barthel ADL และแผนดูแลผู้มีภาวะพึ่งพิง (LTC)</h1><p class="text-xs text-slate-600">เอกสารประกอบการบันทึกข้อมูลเข้าสู่ระบบ 3C Plus+ (รพ.สต.ยางสว่าง)</p></div><div class="text-right text-xs text-slate-600"><div id="printTimestamp">วันที่พิมพ์: -</div><div>3C Plus+ Care Plan Studio</div></div></div></div>
+  <header class="no-print sticky top-0 z-30 border-b border-white/10 bg-slate-900/75 backdrop-blur-xl">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+      <div class="flex items-center gap-3.5">
+        <img src="https://i.ibb.co/1YK6mK7p/Icon-Split-Across-New-Pages.png" alt="3C Plus+ App Logo" class="h-12 w-12 rounded-2xl border border-white/30 bg-yellow-400 object-cover shadow-lg" />
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-heading text-lg font-bold tracking-tight text-white sm:text-xl">3C Plus+ Care Plan Studio</h1>
+            <span class="rounded-full bg-yellow-400 px-2.5 py-0.5 text-[11px] font-bold text-slate-950 shadow-sm">Bento UI</span>
+          </div>
+          <p class="text-xs text-slate-300 sm:text-sm">รพ.สต.ยางสว่าง อ.รัตนบุรี จ.สุรินทร์ • ข้อมูล LTC (56 ราย) + CG (15 ราย) + AI ADL Scanner</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="btnOpenHistory" type="button" class="cc-circle-btn inline-flex items-center gap-1.5 rounded-2xl bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-500 sm:text-sm">
+          <i data-lucide="history" class="h-4 w-4"></i>
+          <span>ประวัติสแกน</span>
+          <span id="historyBadge" class="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-yellow-400 px-1.5 text-[11px] font-bold text-slate-950">0</span>
+        </button>
+        <button id="btnExportCsv" type="button" class="cc-circle-btn inline-flex items-center gap-1.5 rounded-2xl bg-yellow-400 px-3.5 py-2 text-xs font-bold text-slate-950 hover:bg-yellow-300 sm:text-sm">
+          <i data-lucide="file-spreadsheet" class="h-4 w-4"></i>
+          <span>ส่งออก CSV (Excel)</span>
+        </button>
+        <button id="btnResetState" type="button" class="cc-circle-btn inline-flex items-center gap-1.5 rounded-2xl bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-500 sm:text-sm">
+          <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
+          <span>รีเซ็ตสถานะ</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl space-y-5 px-4 py-5 sm:px-6">
+
+    <!-- Asymmetric Bento KPI Grid (Control Center Bento Style) -->
+    <section class="no-print grid grid-cols-2 gap-4 lg:grid-cols-12">
+      <!-- Hero Yellow Bento Tile (4 cols) -->
+      <div class="col-span-2 lg:col-span-4 cc-tile-yellow p-5 flex flex-col justify-between">
+        <div class="flex items-start justify-between">
+          <div>
+            <span class="rounded-full bg-slate-900/10 px-2.5 py-0.5 text-[11px] font-bold text-slate-900">ภาพรวมตำบลยางสว่าง (11 หมู่บ้าน)</span>
+            <div class="mt-2 font-heading text-3xl font-bold text-slate-950">56 <span class="text-sm font-semibold text-slate-800">ราย</span></div>
+          </div>
+          <span class="cc-circle-btn flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white"><i data-lucide="users" class="h-5 w-5"></i></span>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-900/10">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-900">
+            <span>ความคืบหน้าลง 3C Plus+</span>
+            <span id="kpiDoneCount">0 / 56</span>
+          </div>
+          <div class="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-white/70">
+            <div id="kpiDoneBar" class="h-full rounded-full bg-blue-600 transition-all" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ติดบ้าน Cobalt Blue Bento Tile (2 cols) -->
+      <div class="lg:col-span-2 cc-tile-blue p-4 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-blue-100">กลุ่มติดบ้าน</span>
+          <span class="cc-circle-btn flex h-9 w-9 items-center justify-center rounded-full bg-yellow-400 text-slate-950"><i data-lucide="home" class="h-4 w-4"></i></span>
+        </div>
+        <div class="mt-2 font-heading text-2xl font-bold text-white">43 <span class="text-xs font-normal text-blue-100">ราย</span></div>
+        <div class="mt-1 text-[11px] font-medium text-blue-100">76.8% • TAI (B3–B5)</div>
+      </div>
+
+      <!-- ติดเตียง Crimson Red Bento Tile (2 cols) -->
+      <div class="lg:col-span-2 cc-tile-red p-4 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-red-100">กลุ่มติดเตียง</span>
+          <span class="cc-circle-btn flex h-9 w-9 items-center justify-center rounded-full bg-yellow-400 text-slate-950"><i data-lucide="bed" class="h-4 w-4"></i></span>
+        </div>
+        <div class="mt-2 font-heading text-2xl font-bold text-white">13 <span class="text-xs font-normal text-red-100">ราย</span></div>
+        <div class="mt-1 text-[11px] font-medium text-red-100">23.2% • TAI (I1–I3)</div>
+      </div>
+
+      <!-- CG Cool Slate Bento Tile (2 cols) -->
+      <div class="lg:col-span-2 cc-tile-slate p-4 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-700">CG ในระบบ</span>
+          <span class="cc-circle-btn flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-white"><i data-lucide="user-check" class="h-4 w-4"></i></span>
+        </div>
+        <div class="mt-2 font-heading text-2xl font-bold text-slate-950">15 <span class="text-xs font-normal text-slate-600">คน</span></div>
+        <div class="mt-1 text-[11px] font-semibold text-red-700">4 หมู่บ้านรอจัดสรร CG</div>
+      </div>
+
+      <!-- ADL Avg Cool Slate Bento Tile (2 cols) -->
+      <div class="col-span-2 lg:col-span-2 cc-tile-slate p-4 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-700">ADL เฉลี่ย</span>
+          <span class="cc-circle-btn flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white"><i data-lucide="activity" class="h-4 w-4"></i></span>
+        </div>
+        <div class="mt-2 font-heading text-2xl font-bold text-slate-950">8.30</div>
+        <div class="mt-1 text-[11px] font-semibold text-emerald-700">พิกัด GPS ครบ 56/56</div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="no-print flex flex-wrap gap-3">
+      <button id="navTable" type="button" class="tab-active inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-bold transition">
+        <i data-lucide="table-2" class="h-4 w-4"></i>
+        <span>ตารางลงข้อมูล 3C Plus+ (2 ส่วน)</span>
+      </button>
+      <button id="navCg" type="button" class="tab-inactive inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-bold hover:bg-slate-200 transition">
+        <i data-lucide="users-round" class="h-4 w-4"></i>
+        <span>ทะเบียน CG (15 ราย) &amp; ภาระงาน</span>
+      </button>
+      <button id="navMap" type="button" class="tab-inactive inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-bold hover:bg-slate-200 transition">
+        <i data-lucide="map-pinned" class="h-4 w-4"></i>
+        <span>แผนที่พิกัด GPS &amp; วิเคราะห์เชิงพื้นที่</span>
+      </button>
+      <button id="navScanner" type="button" class="tab-inactive inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-bold hover:bg-slate-200 transition">
+        <i data-lucide="scan-line" class="h-4 w-4"></i>
+        <span>สแกนแบบประเมิน ADL (AI)</span>
+      </button>
+    </nav>
+
+    <!-- TAB 1: 3C Plus+ 2-Part Table -->
+    <section id="panelTable" class="space-y-4">
+      <!-- Filter Bar -->
+      <div class="bento-card p-4">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div class="relative">
+            <i data-lucide="search" class="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400"></i>
+            <input id="searchInput" type="text" placeholder="ค้นหา ชื่อ, รหัส YSC, เลขบัตร, บ้านเลขที่..." class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none" />
+          </div>
+          <select id="filterMoo" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-teal-500 focus:bg-white focus:outline-none">
+            <option value="ALL">ทุกหมู่บ้าน (ม.1 – ม.11)</option>
+          </select>
+          <select id="filterStatus" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-teal-500 focus:bg-white focus:outline-none">
+            <option value="ALL">ทุกสถานะ (56 ราย)</option>
+            <option value="ติดเตียง">ติดเตียง (13 ราย • ADL 0–4)</option>
+            <option value="ติดบ้าน">ติดบ้าน (43 ราย • ADL 5–11)</option>
+          </select>
+          <select id="filterCg" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-teal-500 focus:bg-white focus:outline-none">
+            <option value="ALL">CG ทุกคน (15 ราย + รอจัดสรร)</option>
+            <option value="UNASSIGNED">ยังไม่ระบุ CG ประจำหมู่</option>
+          </select>
+          <select id="filterDone" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-teal-500 focus:bg-white focus:outline-none">
+            <option value="ALL">สถานะลง 3C+: ทั้งหมด</option>
+            <option value="PENDING">รอดำเนินการ</option>
+            <option value="DONE">บันทึกแล้ว</option>
+          </select>
+        </div>
+        <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
+          <div id="resultCounter">แสดง 56 จาก 56 รายการ</div>
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full bg-rose-500"></span> ติดเตียง (ADL 0–4)</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full bg-sky-500"></span> ติดบ้าน (ADL 5–11)</span>
+            <span class="inline-flex items-center gap-1 text-teal-700 font-medium"><i data-lucide="mouse-pointer-click" class="h-3.5 w-3.5"></i> คลิกปุ่มคัดลอกเพื่อวางลง 3C Plus+ ได้ทันที</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Table -->
+      <div class="bento-card overflow-hidden">
+        <div class="overflow-x-auto scrollbar-thin">
+          <table class="w-full min-w-[1180px] border-collapse text-left text-xs sm:text-sm">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50/90 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                <th class="px-3 py-3 text-center w-12">ลงแล้ว</th>
+                <th class="px-3 py-3 w-48">ผู้มีภาวะพึ่งพิง / ที่อยู่</th>
+                <th class="px-3 py-3 w-44">เลขบัตร 13 หลัก &amp; GPS</th>
+                <th class="px-3 py-3 w-52">CG ผู้รับผิดชอบ (ปรับได้)</th>
+                <th class="px-3 py-3">ส่วนที่ 1: เสนอของบประมาณ (3C Plus+)</th>
+                <th class="px-3 py-3">ส่วนที่ 2: แผนปฏิบัติงานจริง (3C Plus+)</th>
+                <th class="px-3 py-3 text-center w-28">การ์ดลอก</th>
+              </tr>
+            </thead>
+            <tbody id="patientTableBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: CG Roster & Workload -->
+    <section id="panelCg" class="hidden space-y-4">
+      <div class="bento-card border-amber-200 bg-amber-50/70 p-4">
+        <div class="flex items-start gap-3">
+          <i data-lucide="alert-triangle" class="mt-0.5 h-5 w-5 shrink-0 text-amber-600"></i>
+          <div class="text-sm text-amber-900">
+            <p class="font-semibold">สรุปความครอบคลุมพื้นที่ของ Caregiver (CG 15 ราย เทียบกับ 11 หมู่บ้าน):</p>
+            <ul class="mt-1 list-disc space-y-0.5 pl-5 text-xs sm:text-sm">
+              <li><strong>หมู่บ้านที่ยังไม่มี CG ประจำในรายชื่อ:</strong> ม.2 บ้านนางเข็ม (7 ราย / ติดเตียง 2), ม.5 บ้านน้อยพัฒนา (1 ราย), ม.8 บ้านโนนสังข์ (2 ราย), ม.11 บ้านหนองบัวศรีสว่าง (3 ราย / ติดเตียง 1)</li>
+              <li><strong>หมู่บ้านภาระงานสูง:</strong> ม.7 บ้านขะยูง มีผู้ป่วย 12+1 ราย (ติดเตียง 5 ราย) ต่อ CG 2 คน และ ม.9 บ้านหนองตาด มี 6 ราย (ติดเตียง 3 ราย) ต่อ CG 1 คน</li>
+              <li><strong>ข้อมูล CG รอเติม:</strong> ลำดับที่ 10 <strong>นางรุ่งนภา จันทพันธ์</strong> ยังไม่มีข้อมูลหมู่บ้าน/เลขบัตรในไฟล์ PDF — แนะนำให้ CM มอบหมายช่วยพื้นที่ ม.2 หรือ ม.7</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div id="cgCardsGrid" class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
+    </section>
+
+    <!-- TAB 3: Map & Spatial Analytics -->
+    <section id="panelMap" class="hidden space-y-5">
+      <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <div class="bento-card overflow-hidden lg:col-span-2">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+            <div>
+              <h2 class="font-heading text-base font-bold text-slate-900">แผนที่พิกัด GPS บ้านผู้มีภาวะพึ่งพิง (56 ราย)</h2>
+              <p class="text-xs text-slate-500">ข้อมูลพิกัดจากไฟล์ KML • สีแดง = ติดเตียง (13 ราย), สีฟ้า/เขียว = ติดบ้าน (43 ราย)</p>
+            </div>
+            <div class="flex gap-2">
+              <button id="btnMapStreet" type="button" class="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white">แผนที่ถนน</button>
+              <button id="btnMapSat" type="button" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">ดาวเทียม</button>
+            </div>
+          </div>
+          <div id="ltcMap" class="w-full" style="height: 440px;"></div>
+        </div>
+
+        <div class="bento-card flex flex-col justify-between p-4 space-y-4">
+          <div>
+            <h3 class="font-heading text-base font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="shield-alert" class="h-4 w-4 text-rose-600"></i>
+              จุดตรวจสอบข้อมูลก่อนบันทึก 3C Plus+
+            </h3>
+            <div class="mt-3 space-y-2.5 text-xs">
+              <div class="rounded-xl border border-rose-200 bg-rose-50 p-3">
+                <div class="font-semibold text-rose-800">1. เลขบัตร ปชช. 13 หลักไม่ครบ</div>
+                <p class="mt-0.5 text-rose-700"><strong>YSC-048 นายภัทรพงษ์ นามทอง</strong> (ม.9 บ.11, ติดเตียง ADL 1) ไม่มีเลขบัตรใน Excel — ต้องตรวจจากบัตร/HOSxP ก่อนคีย์</p>
+              </div>
+              <div class="rounded-xl border border-amber-200 bg-amber-50 p-3">
+                <div class="font-semibold text-amber-800">2. หมู่บ้านคลาดเคลื่อน</div>
+                <p class="mt-0.5 text-amber-700"><strong>YSC-037 นางยอด พิกุลสด</strong> (บ.60 บ้านขะยูง) Excel ระบุ ม.6 แต่บ้านขะยูงคือ ม.7 — ตรวจสอบใน 3C+ ก่อนปักหมุด</p>
+              </div>
+              <div class="rounded-xl border border-sky-200 bg-sky-50 p-3">
+                <div class="font-semibold text-sky-800">3. ครัวเรือนเดียวกัน (ระวังสร้างบ้านซ้ำ)</div>
+                <p class="mt-0.5 text-sky-700">• บ.13 ม.2: YSC-008 นางบุญมี &amp; YSC-009 นายบุญจันทร์<br/>• บ.111 ม.7: YSC-031 นางปาน &amp; YSC-032 นายเรือง<br/>• บ.14 ม.7: YSC-033 นายพรหมมา &amp; YSC-034 นางทองศรี</p>
+              </div>
+              <div class="rounded-xl border border-indigo-200 bg-indigo-50 p-3">
+                <div class="font-semibold text-indigo-800">4. ติดเตียงอายุน้อยกว่า 60 ปี (5 ราย)</div>
+                <p class="mt-0.5 text-indigo-700">YSC-006 (39 ปี), YSC-012 (42 ปี Stroke), YSC-035 (56 ปี), YSC-048 (58 ปี), YSC-049 (42 ปี) — เน้นฟื้นฟูและป้องกันแผลกดทับ</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <div class="bento-card p-4">
+          <h3 class="font-heading text-sm font-bold text-slate-900 mb-3">จำนวนผู้มีภาวะพึ่งพิงแยกรายหมู่บ้าน (ม.1 – ม.11)</h3>
+          <div class="relative h-72">
+            <canvas id="chartVillage"></canvas>
+          </div>
+        </div>
+        <div class="bento-card p-4">
+          <h3 class="font-heading text-sm font-bold text-slate-900 mb-3">การกระจายตัวตามช่วงอายุ และระดับภาวะพึ่งพิง</h3>
+          <div class="relative h-72">
+            <canvas id="chartAge"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- TAB 4: Smart Barthel ADL Scanner (AI Vision + Real-time Editor + Care Plan) -->
+    <section id="panelScanner" class="hidden space-y-5">
+      <!-- Capture Section -->
+      <div id="captureSection" class="no-print bento-card overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-gradient-to-r from-teal-50/80 to-sky-50/80 px-5 py-4">
+          <div class="flex items-center gap-2.5">
+            <span class="cc-circle-btn flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 font-heading text-sm font-bold text-white">AI</span>
+            <div>
+              <h2 class="font-heading text-base font-bold text-slate-950 sm:text-lg">สแกนแบบประเมิน Barthel ADL หลายหน้า (Gemini Vision)</h2>
+              <p class="text-xs text-slate-800 sm:text-sm">ถ่ายรูปหรืออัปโหลดหน้า 1–2 พร้อมกัน เพื่อวิเคราะห์คะแนน 10 ข้อและสร้าง Care Plan อัตโนมัติ</p>
+            </div>
+          </div>
+          <button id="btnLoadSample" type="button" class="cc-circle-btn inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-bold text-slate-950 hover:bg-slate-100 transition">
+            <i data-lucide="zap" class="h-4 w-4 text-amber-500"></i>
+            <span>โหลดตัวอย่าง (นางปาน นันทพันธ์)</span>
+          </button>
+        </div>
+
+        <div class="p-5 space-y-4">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <button id="btnOpenWebCamera" type="button" class="cc-tile-blue p-4 text-left transition hover:brightness-110 active:translate-y-0.5 flex items-center gap-3">
+              <span class="cc-circle-btn flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-yellow-400 text-slate-950">
+                <i data-lucide="camera" class="h-5 w-5"></i>
+              </span>
+              <div>
+                <div class="font-heading text-sm font-bold">เปิดกล้องถ่ายสดในแอพ</div>
+                <div class="text-xs text-blue-100">ถ่ายต่อเนื่องหลายหน้า สลับกล้องได้</div>
+              </div>
+            </button>
+
+            <label for="inputMobileCamera" class="cc-tile-yellow p-4 text-left cursor-pointer transition hover:brightness-105 flex items-center gap-3">
+              <span class="cc-circle-btn flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-600 text-white">
+                <i data-lucide="smartphone" class="h-5 w-5"></i>
+              </span>
+              <div>
+                <div class="font-heading text-sm font-bold text-slate-950">กล้องมือถือความละเอียดสูง</div>
+                <div class="text-xs text-slate-800">เรียกกล้องหลักของมือถือถ่ายเอกสาร</div>
+              </div>
+              <input id="inputMobileCamera" type="file" accept="image/*" capture="environment" class="hidden" />
+            </label>
+
+            <label for="inputGalleryFiles" class="cc-tile-slate p-4 text-left cursor-pointer transition hover:bg-slate-300 flex items-center gap-3">
+              <span class="cc-circle-btn flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white">
+                <i data-lucide="images" class="h-5 w-5"></i>
+              </span>
+              <div>
+                <div class="font-heading text-sm font-bold text-slate-950">เลือกจากคลังภาพ (หลายหน้า)</div>
+                <div class="text-xs text-slate-700">เลือกหน้า 1 และหน้า 2 พร้อมกันได้</div>
+              </div>
+              <input id="inputGalleryFiles" type="file" accept="image/*" multiple class="hidden" />
+            </label>
+          </div>
+
+          <div id="imagePreviewContainer" class="hidden space-y-3 border-t border-slate-200 pt-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="rounded-xl bg-slate-900 px-3 py-1 text-xs font-bold text-white">
+                เอกสารพร้อมวิเคราะห์: <span id="imageCountText">0</span> หน้า
+              </span>
+              <button id="btnClearImages" type="button" class="text-xs font-bold text-red-600 hover:underline">ล้างรูปทั้งหมด</button>
+            </div>
+            <div id="imageGrid" class="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-5"></div>
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <p class="text-xs text-slate-600">AI จะอ่านข้อมูลส่วนบุคคล คะแนน Barthel ADL 10 ข้อ และแบบสอบถามท้ายฟอร์มให้อัตโนมัติ</p>
+              <button id="btnAnalyzeAI" type="button" class="cc-circle-btn inline-flex items-center gap-2 rounded-2xl bg-teal-600 px-5 py-2.5 font-heading text-sm font-semibold text-white hover:bg-teal-700 transition">
+                <i data-lucide="sparkles" class="h-4 w-4 text-yellow-300"></i>
+                <span>วิเคราะห์เอกสารด้วย AI (Gemini Vision)</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="apiErrorBox" class="hidden rounded-2xl border-2 border-red-600 bg-red-50 p-4 text-sm text-red-900 flex items-start justify-between gap-3">
+            <div>
+              <div class="font-bold">ไม่สามารถวิเคราะห์ภาพได้ในขณะนี้</div>
+              <div id="apiErrorMessage" class="text-xs mt-0.5"></div>
+            </div>
+            <button id="btnCloseApiError" type="button" class="font-bold text-red-700 px-2">&times;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="no-print bento-card p-8 text-center space-y-2">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-600 shadow-sm">
+          <i data-lucide="clipboard-check" class="h-7 w-7"></i>
+        </div>
+        <h3 class="font-heading text-lg font-bold text-slate-900">พร้อมสแกนและวิเคราะห์แบบประเมิน Barthel ADL</h3>
+        <p class="text-sm text-slate-600 max-w-xl mx-auto">ถ่ายรูปเอกสารด้านบน หรือกดปุ่ม <strong>"โหลดตัวอย่าง (นางปาน นันทพันธ์)"</strong> เพื่อทดสอบตารางลงข้อมูล 3C Plus+ ส่วนที่ 1 และส่วนที่ 2 แบบ Real-time</p>
+      </div>
+
+      <!-- Scanner Result Workspace -->
+      <div id="resultWorkspace" class="hidden space-y-5">
+        <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="cc-tile-yellow p-4">
+            <div class="text-xs font-bold text-slate-800">ผู้รับบริการ / พื้นที่</div>
+            <div id="kpiName" class="font-heading text-lg font-bold text-slate-950 mt-1">-</div>
+            <div id="kpiAgeAddress" class="text-xs text-slate-800 mt-1">-</div>
+          </div>
+          <div class="cc-tile-red p-4">
+            <div class="flex items-center justify-between text-xs font-bold">
+              <span>ผลรวม Barthel ADL</span>
+              <span id="kpiSpecialPPBadge" class="rounded-md bg-yellow-400 px-2 py-0.5 text-[11px] font-bold text-slate-950">-</span>
+            </div>
+            <div class="mt-1 flex items-baseline gap-2">
+              <span id="kpiTotalScore" class="font-heading text-3xl font-bold">0</span>
+              <span class="text-xs text-red-100">/ 20 คะแนน</span>
+            </div>
+            <div class="mt-2 h-2 w-full overflow-hidden rounded-full border border-slate-950 bg-white">
+              <div id="kpiScoreBar" class="h-full rounded-full bg-yellow-400 transition-all" style="width: 5%"></div>
+            </div>
+            <div id="kpiGroupLabel" class="text-xs font-bold mt-1">-</div>
+          </div>
+          <div class="cc-tile-blue p-4">
+            <div class="text-xs font-bold text-blue-100">การจัดกลุ่ม LTC (สปสช.)</div>
+            <div id="kpiLtcGroupTitle" class="font-heading text-lg font-bold mt-1">-</div>
+            <div id="kpiLtcGroupDesc" class="text-xs text-blue-100 mt-1">-</div>
+          </div>
+          <div class="cc-tile-slate p-4">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-800">
+              <span>สิทธิผ้าอ้อม (กปท.)</span>
+              <span id="kpiDiaperStatusPill" class="rounded-md bg-white px-2 py-0.5 text-[11px] font-bold">-</span>
+            </div>
+            <div id="kpiDiaperTitle" class="font-heading text-base font-bold text-slate-950 mt-1">-</div>
+            <div id="kpiDiaperReason" class="text-xs text-slate-700 mt-1">-</div>
+          </div>
+        </div>
+
+        <!-- Alerts & Editor Toggle -->
+        <div id="clinicalAlertsBox" class="bento-card bg-amber-50 p-4 sm:p-5">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="flex-1 min-w-[240px]">
+              <h3 class="font-heading text-sm font-bold text-amber-950 sm:text-base">จุดที่ต้องตรวจสอบก่อนกดบันทึกใน 3C Plus+</h3>
+              <ul id="clinicalAlertsList" class="mt-2 list-disc space-y-1 pl-5 text-xs text-amber-900 sm:text-sm"></ul>
+            </div>
+            <button id="btnToggleEditor" type="button" class="no-print cc-circle-btn inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-500 transition sm:text-sm">
+              <i data-lucide="edit-3" class="h-4 w-4"></i>
+              <span id="btnToggleEditorLabel">ตรวจสอบ / แก้ไขข้อมูลและคะแนน</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Interactive Verification Editor -->
+        <div id="editorPanel" class="no-print hidden bento-card overflow-hidden">
+          <div class="flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 text-white">
+            <h3 class="font-heading text-sm font-bold sm:text-base">โหมดตรวจสอบและปรับแก้ข้อมูล (อัปเดตตารางและ Care Plan ทันที)</h3>
+            <button id="btnCloseEditor" type="button" class="rounded-lg bg-white/20 px-3 py-1 text-xs font-bold hover:bg-white/30">พับเก็บ</button>
+          </div>
+          <div class="p-5 space-y-5">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div><label class="block text-xs font-bold text-slate-600 mb-1">คำนำหน้า</label><input id="editPrefix" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" /></div>
+              <div class="sm:col-span-2"><label class="block text-xs font-bold text-slate-600 mb-1">ชื่อ - นามสกุล</label><input id="editFullName" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" /></div>
+              <div><label class="block text-xs font-bold text-slate-600 mb-1">อายุ (ปี)</label><input id="editAge" type="number" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" /></div>
+              <div><label class="block text-xs font-bold text-slate-600 mb-1">เลขบัตร 13 หลัก</label><input id="editCid" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" /></div>
+              <div><label class="block text-xs font-bold text-slate-600 mb-1">สิทธิการรักษา</label><select id="editHealthRight" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white"><option value="">-- ยังไม่ระบุ --</option><option value="บัตรทอง (UC) / ผู้สูงอายุ">บัตรทอง (UC) / ผู้สูงอายุ</option><option value="ข้าราชการ / รัฐวิสาหกิจ">ข้าราชการ / รัฐวิสาหกิจ</option><option value="ประกันสังคม">ประกันสังคม</option><option value="อปท. / สิทธิอื่น ๆ">อปท. / สิทธิอื่น ๆ</option></select></div>
+              <div><label class="block text-xs font-bold text-slate-600 mb-1">บ้านเลขที่</label><input id="editHouseNo" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" /></div>
+              <div><label class="block text-xs font-bold text-slate-600 mb-1">หมู่ที่</label><input id="editMoo" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" /></div>
+              <div class="sm:col-span-2"><label class="block text-xs font-bold text-slate-600 mb-1">ตำบล / อำเภอ / จังหวัด</label><input id="editSubdistrict" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" /></div>
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-bold text-slate-600 mb-1">พิกัด GPS</label>
+                <div class="flex gap-2">
+                  <input id="editGps" type="text" class="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                  <button id="btnGetGps" type="button" class="rounded-xl bg-teal-600 px-3 py-2 text-xs font-bold text-white hover:bg-teal-500">ดึงพิกัดปัจจุบัน</button>
+                </div>
+              </div>
+              <div class="sm:col-span-2"><label class="block text-xs font-bold text-slate-600 mb-1">โรคประจำตัว</label><input id="editDiseases" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" /></div>
+              <div><label class="block text-xs font-bold text-slate-600 mb-1">สถานะผู้ดูแลหลัก</label><select id="editCaregiverStatus" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white"><option value="มี ครอบครัวดูแล">มี ครอบครัวดูแล</option><option value="มี เพื่อนบ้านดูแล">มี เพื่อนบ้านดูแล</option><option value="ไม่มี อยู่ตามลำพังไม่มีญาติ">ไม่มี อยู่ตามลำพังไม่มีญาติ</option><option value="ไม่มี ถูกญาติทอดทิ้ง">ไม่มี ถูกญาติทอดทิ้ง</option><option value="">ยังไม่ระบุ</option></select></div>
+              <div><label class="block text-xs font-bold text-slate-600 mb-1">ชื่อ/เบอร์โทรผู้ดูแล</label><input id="editCaregiverInfo" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" /></div>
+              <div><label class="block text-xs font-bold text-slate-600 mb-1">เงินสงเคราะห์/เบี้ยยังชีพ</label><select id="editWelfare" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white"><option value="">(เว้นว่าง)</option><option value="ได้รับ">ได้รับ</option><option value="ไม่ได้รับ">ไม่ได้รับ</option><option value="ไม่ทราบ">ไม่ทราบ</option></select></div>
+              <div><label class="block text-xs font-bold text-slate-600 mb-1">สมาชิกชมรมผู้สูงอายุ</label><select id="editClub" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white"><option value="">(เว้นว่าง)</option><option value="ไม่ได้เป็น">ไม่ได้เป็น</option><option value="ชมรมผู้สูงอายุ">ชมรมผู้สูงอายุ</option><option value="คลังปัญญา">คลังปัญญา</option><option value="ชมรมผู้สูงอายุและคลังปัญญา">ชมรมผู้สูงอายุและคลังปัญญา</option><option value="อื่นๆ">อื่นๆ</option></select></div>
+              <div><label class="block text-xs font-bold text-slate-600 mb-1">สถานะขับถ่ายปัสสาวะ (ข้อ 10)</label><select id="editBladderMode" class="w-full rounded-xl border border-amber-400 bg-amber-50 px-3 py-2 text-sm"><option value="unconfirmed_incontinence">กลั้นไม่ได้ (รอยืนยันสายสวน)</option><option value="incontinence">ยืนยัน: กลั้นไม่ได้ (ผ้าอ้อม)</option><option value="foley">ยืนยัน: คาสายสวน Foley's Cath</option><option value="normal">กลั้นได้ปกติ</option></select></div>
+              <div><label class="block text-xs font-bold text-slate-600 mb-1">จัดกลุ่ม LTC</label><select id="editLtcGroup" class="w-full rounded-xl border border-blue-400 bg-blue-50 px-3 py-2 text-sm font-bold"><option value="group1">กลุ่มที่ 1 (ติดบ้าน)</option><option value="group2">กลุ่มที่ 2 (ติดบ้าน ซับซ้อน)</option><option value="group3">กลุ่มที่ 3 (ติดเตียง พึ่งพิงสูง)</option><option value="group4">กลุ่มที่ 4 (ติดเตียง ซับซ้อน/ระยะท้าย)</option><option value="social">ติดสังคม (ADL ≥ 12)</option></select></div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
+                <h4 class="font-heading text-sm font-bold text-slate-900">คะแนน Barthel ADL รายข้อ (คลิกปรับได้ทันที)</h4>
+                <span class="rounded-lg bg-blue-600 px-3 py-1 text-xs font-bold text-white">รวม: <span id="editorLiveTotal">0</span> / 20</span>
+              </div>
+              <div id="editorAdlGrid" class="grid grid-cols-1 gap-3 md:grid-cols-2"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Toolbar -->
+        <div class="no-print bento-card p-3.5 flex flex-wrap items-center justify-between gap-3">
+          <div class="inline-flex rounded-xl bg-slate-200 p-1">
+            <button type="button" data-scan-tab="all" class="scan-tab-btn rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white">ดูทั้ง 2 ส่วน</button>
+            <button type="button" data-scan-tab="part1" class="scan-tab-btn rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700">ส่วนที่ 1: ทะเบียน &amp; ADL</button>
+            <button type="button" data-scan-tab="part2" class="scan-tab-btn rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700">ส่วนที่ 2: Care Plan</button>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button id="btnSaveCase" type="button" class="cc-circle-btn rounded-xl bg-teal-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-teal-500">บันทึกประวัติ</button>
+            <button id="btnCopyFullReport" type="button" class="cc-circle-btn rounded-xl bg-yellow-400 px-3.5 py-2 text-xs font-bold text-slate-950 hover:bg-yellow-300">คัดลอกทั้งหมด</button>
+            <button id="btnScannerExportCsv" type="button" class="cc-circle-btn rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-emerald-500">ส่งออก CSV เคสนี้</button>
+            <button id="btnPrintA4" type="button" class="cc-circle-btn rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-800">พิมพ์ A4 / PDF</button>
+          </div>
+        </div>
+
+        <!-- Part 1 Tables -->
+        <div id="part1Section" class="space-y-4">
+          <div class="bento-card overflow-hidden">
+            <div class="border-b border-slate-200 bg-slate-100 px-4 py-3 font-heading text-sm font-bold text-slate-900">1.1 ข้อมูลทั่วไป ข้อมูลผู้ดูแล และสถานะความเปราะบาง</div>
+            <div class="overflow-x-auto"><table class="w-full text-left text-xs sm:text-sm"><thead><tr class="border-b bg-slate-50 text-slate-600"><th class="px-4 py-2.5">หัวข้อใน 3C Plus+</th><th class="px-4 py-2.5">ข้อมูลสำหรับกรอก</th><th class="px-4 py-2.5">หมายเหตุ</th><th class="px-3 py-2.5 text-center no-print">คัดลอก</th></tr></thead><tbody id="tablePart1General" class="divide-y divide-slate-100"></tbody></table></div>
+          </div>
+          <div class="bento-card overflow-hidden">
+            <div class="flex items-center justify-between border-b border-slate-200 bg-slate-100 px-4 py-3">
+              <span class="font-heading text-sm font-bold text-slate-900">1.2 ตารางติ๊กคะแนน Barthel ADL รายข้อ (10 ข้อ)</span>
+              <span id="tableAdlSummaryPill" class="rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-bold text-white">-</span>
+            </div>
+            <div class="overflow-x-auto"><table class="w-full text-left text-xs sm:text-sm"><thead><tr class="border-b bg-slate-50 text-slate-600"><th class="px-3 py-2.5 text-center">ข้อ</th><th class="px-4 py-2.5">กิจวัตรประจำวัน</th><th class="px-4 py-2.5">ตัวเลือกที่ต้องติ๊กใน 3C Plus+</th><th class="px-3 py-2.5 text-center">คะแนน</th><th class="px-3 py-2.5 text-center no-print">คัดลอก</th></tr></thead><tbody id="tablePart1Adl" class="divide-y divide-slate-100"></tbody></table></div>
+          </div>
+        </div>
+
+        <!-- Part 2 Tables -->
+        <div id="part2Section" class="space-y-4 print-break-before">
+          <div class="bento-card overflow-hidden">
+            <div class="border-b border-slate-200 bg-slate-100 px-4 py-3 font-heading text-sm font-bold text-slate-900">2.1 โครงสร้างหลัก Care Plan (สำหรับเสนอคณะอนุกรรมการฯ LTC ตำบล)</div>
+            <div class="overflow-x-auto"><table class="w-full text-left text-xs sm:text-sm"><thead><tr class="border-b bg-slate-50 text-slate-600"><th class="px-4 py-2.5 w-1/4">หัวข้อ Care Plan</th><th class="px-4 py-2.5">แนวทางการเลือก / ข้อความสำหรับบันทึก</th><th class="px-3 py-2.5 text-center no-print">คัดลอก</th></tr></thead><tbody id="tablePart2Structure" class="divide-y divide-slate-100"></tbody></table></div>
+          </div>
+          <div class="bento-card overflow-hidden">
+            <div class="border-b border-slate-200 bg-slate-100 px-4 py-3 font-heading text-sm font-bold text-slate-900">2.2 ตารางปัญหาและกิจกรรมการดูแล (แยกบทบาท CM / CG)</div>
+            <div class="overflow-x-auto"><table class="w-full text-left text-xs sm:text-sm"><thead><tr class="border-b bg-slate-50 text-slate-600"><th class="px-4 py-2.5">ด้านปัญหา (ADL)</th><th class="px-4 py-2.5">ปัญหาและความต้องการ</th><th class="px-4 py-2.5">กิจกรรมของ CM</th><th class="px-4 py-2.5">กิจกรรมของ CG</th></tr></thead><tbody id="tablePart2CarePlan" class="divide-y divide-slate-200 align-top"></tbody></table></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Detail / Copy Modal -->
+  <div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-3 backdrop-blur-sm sm:p-6">
+    <div class="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="modalCode" class="rounded-lg bg-teal-600 px-2.5 py-0.5 text-xs font-bold text-white">YSC-001</span>
+            <h2 id="modalTitle" class="font-heading text-lg font-bold text-slate-900">-</h2>
+          </div>
+          <p id="modalSubtitle" class="mt-0.5 text-xs text-slate-500">-</p>
+        </div>
+        <button id="btnCloseModal" type="button" class="rounded-xl p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-700">
+          <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+      </div>
+      <div id="modalBody" class="overflow-y-auto p-5 space-y-5 scrollbar-thin"></div>
+    </div>
+  </div>
+
+
+  <!-- WebRTC Live Camera Modal -->
+  <div id="cameraModal" class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/90 p-3 backdrop-blur-sm">
+    <div class="flex max-h-[94vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-slate-700 bg-slate-900 text-white shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-700 bg-slate-950 px-4 py-3">
+        <span class="font-heading text-sm font-bold">ถ่ายภาพเอกสาร Barthel ADL</span>
+        <div class="flex gap-2">
+          <button id="btnSwitchCamera" type="button" class="rounded-xl bg-white/15 px-3 py-1.5 text-xs font-bold hover:bg-white/25">สลับกล้อง</button>
+          <button id="btnCloseCamera" type="button" class="rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold">&times;</button>
+        </div>
+      </div>
+      <div class="relative flex min-h-[300px] flex-1 items-center justify-center bg-black">
+        <video id="cameraVideo" autoplay playsinline muted class="h-full w-full object-contain"></video>
+        <div id="cameraErrorOverlay" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-slate-900/95 p-6 text-center gap-3">
+          <div class="font-heading font-bold">ไม่สามารถเปิดกล้องสดได้</div>
+          <p id="cameraErrorText" class="text-xs text-slate-300"></p>
+          <button id="btnCloseCameraErr" type="button" class="rounded-xl bg-yellow-400 px-4 py-2 text-xs font-bold text-slate-950">ปิดหน้าต่าง</button>
+        </div>
+      </div>
+      <div class="flex items-center justify-between border-t border-slate-700 bg-slate-950 px-4 py-3">
+        <div class="text-xs">ถ่ายแล้ว: <span id="cameraCapturedCount" class="font-bold text-yellow-400">0</span> หน้า</div>
+        <button id="btnCapturePhoto" type="button" class="h-14 w-14 rounded-full border-4 border-yellow-400 bg-white"></button>
+        <button id="btnCameraDone" type="button" class="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white">เสร็จสิ้น</button>
+      </div>
+    </div>
+    <canvas id="cameraCanvas" class="hidden"></canvas>
+  </div>
+
+  <!-- Lightbox Modal -->
+  <div id="lightboxModal" class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/90 p-3 backdrop-blur-sm">
+    <div class="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-slate-700 bg-slate-900 text-white">
+      <div class="flex items-center justify-between px-4 py-2.5 bg-slate-950">
+        <span id="lightboxTitle" class="font-heading text-sm font-bold">ภาพเอกสาร</span>
+        <button id="btnCloseLightbox" type="button" class="rounded-lg bg-white/15 px-3 py-1 text-xs font-bold">ปิด</button>
+      </div>
+      <div class="flex flex-1 items-center justify-center overflow-auto bg-black p-3">
+        <img id="lightboxImg" src="" alt="เอกสาร" class="max-h-[78vh] max-w-full object-contain" />
+      </div>
+    </div>
+  </div>
+
+  <!-- History Drawer Modal -->
+  <div id="historyModal" class="no-print fixed inset-0 z-50 hidden justify-end bg-slate-950/60 backdrop-blur-sm">
+    <div class="flex h-full w-full max-w-md flex-col bg-white shadow-2xl">
+      <div class="flex items-center justify-between bg-slate-900 px-5 py-4 text-white">
+        <div>
+          <h3 class="font-heading text-base font-bold">ประวัติเคสที่สแกนและบันทึกไว้</h3>
+          <p class="text-xs text-slate-300">จัดเก็บในเครื่องนี้ (LocalStorage)</p>
+        </div>
+        <button id="btnCloseHistory" type="button" class="rounded-xl bg-white/15 px-3 py-1 text-lg font-bold">&times;</button>
+      </div>
+      <div id="historyList" class="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-4"></div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm">
+    <div class="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-2xl space-y-3">
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-50 border border-teal-200">
+        <i data-lucide="scan-line" class="h-8 w-8 text-slate-950 animate-pulse"></i>
+      </div>
+      <h3 class="font-heading text-base font-bold text-slate-900">กำลังอ่านและวิเคราะห์เอกสาร</h3>
+      <p id="loadingStepText" class="text-xs text-slate-600">กำลังส่งภาพให้ Gemini Vision AI ตรวจสอบรอยติ๊ก Barthel ADL...</p>
+    </div>
+  </div>
+
+  <script>
+    const PATIENTS = [{"seq": 1, "cid": "3-3207-00199-60-0", "hn": "", "name": "นางบุญ แพยงยา", "age": 95, "right": "", "house_no": "123", "moo": 1, "village": "บ้านยาง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.299703, "lon": 103.979089, "code": "YSC-001", "default_cg": "CG-01"}, {"seq": 2, "cid": "3-3207-00199-43-0", "hn": "", "name": "นางสังวาร อุดม", "age": 65, "right": "", "house_no": "119", "moo": 1, "village": "บ้านยาง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 10, "disease": "", "note": "", "lat": 15.299702, "lon": 103.979994, "code": "YSC-002", "default_cg": "CG-14"}, {"seq": 3, "cid": "3-3207-00196-83-0", "hn": "", "name": "นางนิด ดอกจันทร์", "age": 80, "right": "", "house_no": "79", "moo": 1, "village": "บ้านยาง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.301725, "lon": 103.979811, "code": "YSC-003", "default_cg": "CG-01"}, {"seq": 4, "cid": "5-3207-00058-13-1", "hn": "", "name": "นายทองใส ทันใจ", "age": 74, "right": "", "house_no": "28", "moo": 1, "village": "บ้านยาง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.30172, "lon": 103.979065, "code": "YSC-004", "default_cg": "CG-14"}, {"seq": 5, "cid": "3-3207-00196-42-2", "hn": "", "name": "นางจันดี สามี", "age": 88, "right": "", "house_no": "59", "moo": 1, "village": "บ้านยาง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 10, "disease": "", "note": "", "lat": 15.302059, "lon": 103.980109, "code": "YSC-005", "default_cg": "CG-01"}, {"seq": 6, "cid": "1-3207-00261-55-4", "hn": "", "name": "นส.ฑริกา พิมพ์วงค์", "age": 39, "right": "", "house_no": "49", "moo": 1, "village": "บ้านยาง", "tambon": "ยางสว่าง", "status": "ติดเตียง", "adl": 0, "disease": "", "note": "", "lat": 15.30293, "lon": 103.979379, "code": "YSC-006", "default_cg": "CG-14"}, {"seq": 7, "cid": "3-3207-00199-79-1", "hn": "", "name": "นายท้าว แสงไข", "age": 76, "right": "", "house_no": "127", "moo": 1, "village": "บ้านยาง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.302223, "lon": 103.979138, "code": "YSC-007", "default_cg": "CG-01"}, {"seq": 8, "cid": "3-3207-00188-45-4", "hn": "", "name": "นางบุญมี เพียรเสมอ", "age": 92, "right": "", "house_no": "13", "moo": 2, "village": "บ้านนางเข็ม", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.318975, "lon": 103.99722, "code": "YSC-008", "default_cg": "UNASSIGNED"}, {"seq": 9, "cid": "3-3207-00188-46-2", "hn": "", "name": "นายบุญจันทร์ เพียรเสมอ", "age": 91, "right": "", "house_no": "13", "moo": 2, "village": "บ้านนางเข็ม", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.318975, "lon": 103.99722, "code": "YSC-009", "default_cg": "UNASSIGNED"}, {"seq": 10, "cid": "3-3207-00192-25-7", "hn": "", "name": "นายจิต วงค์คำจันทร์", "age": 78, "right": "", "house_no": "7", "moo": 2, "village": "บ้านนางเข็ม", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 10, "disease": "", "note": "", "lat": 15.317836, "lon": 103.997248, "code": "YSC-010", "default_cg": "UNASSIGNED"}, {"seq": 11, "cid": "3-3207-00191-18-8", "hn": "", "name": "นายใส สาลี", "age": 87, "right": "", "house_no": "64", "moo": 2, "village": "บ้านนางเข็ม", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.317368, "lon": 103.995287, "code": "YSC-011", "default_cg": "UNASSIGNED"}, {"seq": 12, "cid": "1-3207-00023-06-8", "hn": "88898", "name": "นายสุรศักดิ์ ดีสา", "age": 42, "right": "", "house_no": "25/1", "moo": 2, "village": "บ้านนางเข็ม", "tambon": "ยางสว่าง", "status": "ติดเตียง", "adl": 0, "disease": "stroke", "note": "", "lat": 15.319871, "lon": 103.995893, "code": "YSC-012", "default_cg": "UNASSIGNED"}, {"seq": 13, "cid": "3-3207-00192-72-9", "hn": "", "name": "นางบุญ ไชยสอน", "age": 93, "right": "", "house_no": "92", "moo": 2, "village": "บ้านนางเข็ม", "tambon": "ยางสว่าง", "status": "ติดเตียง", "adl": 2, "disease": "", "note": "", "lat": 15.320841, "lon": 103.996038, "code": "YSC-013", "default_cg": "UNASSIGNED"}, {"seq": 14, "cid": "3-3207-00192-06-1", "hn": "", "name": "นางเอี่ยม โคตรชัย", "age": 84, "right": "", "house_no": "80", "moo": 2, "village": "บ้านนางเข็ม", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 9, "disease": "", "note": "", "lat": 15.317551, "lon": 103.994674, "code": "YSC-014", "default_cg": "UNASSIGNED"}, {"seq": 15, "cid": "3-3207-00498-90-9", "hn": "", "name": "นายสวัสดิ์ สมงาม", "age": 64, "right": "", "house_no": "46", "moo": 3, "village": "บ้านแก่นท้าว", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 8, "disease": "", "note": "", "lat": 15.291651, "lon": 103.991608, "code": "YSC-015", "default_cg": "CG-04"}, {"seq": 16, "cid": "3-3207-00500-09-1", "hn": "", "name": "นางทุมมา พรหมบุตร", "age": 92, "right": "", "house_no": "26", "moo": 3, "village": "บ้านแก่นท้าว", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.29146, "lon": 103.991148, "code": "YSC-016", "default_cg": "CG-06"}, {"seq": 17, "cid": "3-3207-00499-97-2", "hn": "", "name": "นายสิงห์ คำสัตย์", "age": 86, "right": "", "house_no": "24", "moo": 3, "village": "บ้านแก่นท้าว", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.294507, "lon": 103.984049, "code": "YSC-017", "default_cg": "CG-04"}, {"seq": 18, "cid": "3-3207-00500-32-6", "hn": "", "name": "นายสมร ขันวิเศษ", "age": 73, "right": "", "house_no": "31", "moo": 3, "village": "บ้านแก่นท้าว", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.28846, "lon": 103.990066, "code": "YSC-018", "default_cg": "CG-06"}, {"seq": 19, "cid": "3-3207-00311-27-2", "hn": "", "name": "นางหวัน เลิศจิยา", "age": 88, "right": "", "house_no": "42", "moo": 4, "village": "บ้านกล้วย", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 10, "disease": "", "note": "", "lat": 15.297725, "lon": 103.992309, "code": "YSC-019", "default_cg": "CG-02"}, {"seq": 20, "cid": "3-3207-00312-42-2", "hn": "", "name": "นายพันธ์ สุกเหลือง", "age": 88, "right": "", "house_no": "58", "moo": 4, "village": "บ้านกล้วย", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.296086, "lon": 103.991784, "code": "YSC-020", "default_cg": "CG-03"}, {"seq": 21, "cid": "3-3207-00310-41-1", "hn": "", "name": "นายสุบิน พิมพ์นนท์", "age": 80, "right": "", "house_no": "28", "moo": 4, "village": "บ้านกล้วย", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.296902, "lon": 103.992082, "code": "YSC-021", "default_cg": "CG-07"}, {"seq": 22, "cid": "3-3207-00310-03-9", "hn": "", "name": "นายเลี่ยม บุญมา", "age": 77, "right": "", "house_no": "22", "moo": 4, "village": "บ้านกล้วย", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.297006, "lon": 103.992139, "code": "YSC-022", "default_cg": "CG-12"}, {"seq": 23, "cid": "3-3207-00311-17-5", "hn": "", "name": "นางทองมี โสภาพ", "age": 69, "right": "", "house_no": "36/1", "moo": 4, "village": "บ้านกล้วย", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.297909, "lon": 103.992156, "code": "YSC-023", "default_cg": "CG-02"}, {"seq": 24, "cid": "3-3207-00309-32-4", "hn": "", "name": "นางต่ำ ต้นงาม", "age": 77, "right": "", "house_no": "38", "moo": 4, "village": "บ้านกล้วย", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.29747, "lon": 103.992721, "code": "YSC-024", "default_cg": "CG-03"}, {"seq": 25, "cid": "3-3207-00312-74-1", "hn": "", "name": "นายสุวรรณ ชนะภัย", "age": 77, "right": "", "house_no": "17", "moo": 4, "village": "บ้านกล้วย", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 10, "disease": "", "note": "", "lat": 15.29598, "lon": 103.991749, "code": "YSC-025", "default_cg": "CG-07"}, {"seq": 26, "cid": "3-3207-00309-73-1", "hn": "", "name": "นางบัวสี เลิศจริยา", "age": 83, "right": "", "house_no": "16", "moo": 4, "village": "บ้านกล้วย", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.296638, "lon": 103.992247, "code": "YSC-026", "default_cg": "CG-12"}, {"seq": 27, "cid": "3-3207-00311-64-7", "hn": "", "name": "นางนาง ชนะงาม", "age": 82, "right": "", "house_no": "47", "moo": 4, "village": "บ้านกล้วย", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 8, "disease": "", "note": "", "lat": 15.295862, "lon": 103.991683, "code": "YSC-027", "default_cg": "CG-02"}, {"seq": 28, "cid": "3-3207-00494-01-6", "hn": "", "name": "นางเสน สุดทวี", "age": 76, "right": "", "house_no": "25", "moo": 5, "village": "บ้านน้อยพัฒนา", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.303676, "lon": 103.958984, "code": "YSC-028", "default_cg": "UNASSIGNED"}, {"seq": 29, "cid": "3-3207-00572-18-1", "hn": "", "name": "นายเขียว รีรัตน์", "age": 87, "right": "", "house_no": "2", "moo": 6, "village": "บ้านยางเตี้ย", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.288904, "lon": 103.961062, "code": "YSC-029", "default_cg": "CG-05"}, {"seq": 30, "cid": "3-3207-00572-48-3", "hn": "", "name": "พระทองอินทร์ แสงทอง", "age": 74, "right": "", "house_no": "6", "moo": 6, "village": "บ้านยางเตี้ย", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.293759, "lon": 103.964639, "code": "YSC-030", "default_cg": "CG-09"}, {"seq": 31, "cid": "3-3207-00328-47-7", "hn": "", "name": "นางปาน นันทพันธ์", "age": 92, "right": "", "house_no": "111", "moo": 7, "village": "บ้านขะยูง", "tambon": "ยางสว่าง", "status": "ติดเตียง", "adl": 1, "disease": "", "note": "", "lat": 15.323069, "lon": 103.978306, "code": "YSC-031", "default_cg": "CG-08"}, {"seq": 32, "cid": "3-3207-00328-46-9", "hn": "", "name": "นายเรือง นันทพันธ์", "age": 95, "right": "", "house_no": "111", "moo": 7, "village": "บ้านขะยูง", "tambon": "ยางสว่าง", "status": "ติดเตียง", "adl": 1, "disease": "", "note": "", "lat": 15.32306, "lon": 103.978344, "code": "YSC-032", "default_cg": "CG-11"}, {"seq": 33, "cid": "3-3207-00324-73-1", "hn": "", "name": "นายพรหมมา สุขเหลือง", "age": 100, "right": "", "house_no": "14", "moo": 7, "village": "บ้านขะยูง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 7, "disease": "", "note": "", "lat": 15.323959, "lon": 103.977497, "code": "YSC-033", "default_cg": "CG-08"}, {"seq": 34, "cid": "3-3207-00324-72-2", "hn": "59903", "name": "นางทองศรี สุกเหลือง", "age": 80, "right": "ท74", "house_no": "14", "moo": 7, "village": "บ้านขะยูง", "tambon": "ยางสว่าง", "status": "ติดเตียง", "adl": 2, "disease": "stroke", "note": "", "lat": 15.324017, "lon": 103.977466, "code": "YSC-034", "default_cg": "CG-11"}, {"seq": 35, "cid": "5-3508-00032-09-6", "hn": "", "name": "นายเอ็มไพ กุมารสิทธิ์", "age": 56, "right": "", "house_no": "8", "moo": 7, "village": "บ้านขะยูง", "tambon": "ยางสว่าง", "status": "ติดเตียง", "adl": 4, "disease": "", "note": "", "lat": 15.3225, "lon": 103.97804, "code": "YSC-035", "default_cg": "CG-08"}, {"seq": 36, "cid": "3-3508-00152-59-1", "hn": "", "name": "นายบัญเพ็ญ แสงศรี", "age": 62, "right": "", "house_no": "8/1", "moo": 7, "village": "บ้านขะยูง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 10, "disease": "", "note": "", "lat": 15.32281, "lon": 103.977628, "code": "YSC-036", "default_cg": "CG-11"}, {"seq": 37, "cid": "3-3207-00325-07-9", "hn": "", "name": "นางยอด พิกุลสด", "age": 68, "right": "", "house_no": "60", "moo": 6, "village": "บ้านขะยูง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.323335, "lon": 103.978061, "code": "YSC-037", "default_cg": "CG-05"}, {"seq": 38, "cid": "3-3207-00329-80-5", "hn": "", "name": "นายสาน บุญเต็ม", "age": 80, "right": "", "house_no": "143/1", "moo": 7, "village": "บ้านขะยูง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 9, "disease": "", "note": "", "lat": 15.322274, "lon": 103.977542, "code": "YSC-038", "default_cg": "CG-08"}, {"seq": 39, "cid": "3-3207-00328-40-0", "hn": "", "name": "นางสิม พุฒซ้อน", "age": 85, "right": "", "house_no": "110", "moo": 7, "village": "บ้านขะยูง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 9, "disease": "", "note": "", "lat": 15.323463, "lon": 103.97746, "code": "YSC-039", "default_cg": "CG-11"}, {"seq": 40, "cid": "3-3207-00325-54-1", "hn": "", "name": "นางปัด เกตุศิริ", "age": 85, "right": "", "house_no": "22", "moo": 7, "village": "บ้านขะยูง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 10, "disease": "", "note": "", "lat": 15.323191, "lon": 103.978645, "code": "YSC-040", "default_cg": "CG-08"}, {"seq": 41, "cid": "3-3207-00327-94-2", "hn": "", "name": "นางหวัน นันทพันธ์", "age": 87, "right": "", "house_no": "101", "moo": 7, "village": "บ้านขะยูง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.335492, "lon": 103.985223, "code": "YSC-041", "default_cg": "CG-11"}, {"seq": 42, "cid": "3-3207-00329-75-9", "hn": "", "name": "นายพันธ์ สารกาล", "age": 82, "right": "", "house_no": "14", "moo": 7, "village": "บ้านขะยูง", "tambon": "ยางสว่าง", "status": "ติดเตียง", "adl": 2, "disease": "", "note": "", "lat": 15.324022, "lon": 103.97632, "code": "YSC-042", "default_cg": "CG-08"}, {"seq": 43, "cid": "3-3207-00329-31-7", "hn": "", "name": "นส.ประหยัด ศรชัย", "age": 59, "right": "", "house_no": "130", "moo": 7, "village": "บ้านขะยูง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 9, "disease": "", "note": "", "lat": 15.335998, "lon": 103.98498, "code": "YSC-043", "default_cg": "CG-11"}, {"seq": 44, "cid": "3-1998-00031-02-6", "hn": "", "name": "นางบุญจันทร์ ออละวัลย์", "age": 95, "right": "", "house_no": "19", "moo": 8, "village": "บ้านโนนสังข์", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.324066, "lon": 103.992302, "code": "YSC-044", "default_cg": "UNASSIGNED"}, {"seq": 45, "cid": "3-3207-00576-43-8", "hn": "", "name": "นางอั้ว เชิดชาย", "age": 96, "right": "", "house_no": "44", "moo": 8, "village": "บ้านโนนสังข์", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 9, "disease": "", "note": "", "lat": 15.32423, "lon": 103.99265, "code": "YSC-045", "default_cg": "UNASSIGNED"}, {"seq": 46, "cid": "3-3207-00578-01-5", "hn": "", "name": "นางลำใย พิรุณฤทธิ์", "age": 62, "right": "", "house_no": "75", "moo": 9, "village": "บ้านหนองตาด", "tambon": "ยางสว่าง", "status": "ติดเตียง", "adl": 1, "disease": "", "note": "", "lat": 15.32235, "lon": 103.972895, "code": "YSC-046", "default_cg": "CG-15"}, {"seq": 47, "cid": "3-3207-00577-65-5", "hn": "", "name": "นายขาล จันทะพันธ์", "age": 88, "right": "", "house_no": "57", "moo": 9, "village": "บ้านหนองตาด", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.321999, "lon": 103.974089, "code": "YSC-047", "default_cg": "CG-15"}, {"seq": 48, "cid": "", "hn": "", "name": "นายภัทรพงษ์ นามทอง", "age": 58, "right": "", "house_no": "11", "moo": 9, "village": "บ้านหนองตาด", "tambon": "ยางสว่าง", "status": "ติดเตียง", "adl": 1, "disease": "", "note": "", "lat": 15.32206, "lon": 103.974284, "code": "YSC-048", "default_cg": "CG-15"}, {"seq": 49, "cid": "1-3207-00001-71-4", "hn": "", "name": "นายวรชัย อินทิพย์", "age": 42, "right": "", "house_no": "32", "moo": 9, "village": "บ้านหนองตาด", "tambon": "ยางสว่าง", "status": "ติดเตียง", "adl": 1, "disease": "", "note": "", "lat": 15.320965, "lon": 103.973677, "code": "YSC-049", "default_cg": "CG-15"}, {"seq": 50, "cid": "3-3207-00578-11-2", "hn": "", "name": "นางสา นันทะพันธ์", "age": 88, "right": "", "house_no": "70", "moo": 9, "village": "บ้านหนองตาด", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.321237, "lon": 103.973231, "code": "YSC-050", "default_cg": "CG-15"}, {"seq": 51, "cid": "3-3207-00571-95-9", "hn": "", "name": "นางถัน เชิดชาย", "age": 84, "right": "", "house_no": "98", "moo": 9, "village": "บ้านหนองตาด", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.321542, "lon": 103.973368, "code": "YSC-051", "default_cg": "CG-15"}, {"seq": 52, "cid": "3-3207-00580-96-6", "hn": "", "name": "นางทา คำสัตย์", "age": 86, "right": "", "house_no": "109", "moo": 10, "village": "บ้านศาลา", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 9, "disease": "", "note": "", "lat": 15.293526, "lon": 103.971285, "code": "YSC-052", "default_cg": "CG-13"}, {"seq": 53, "cid": "3-3207-00580-20-6", "hn": "", "name": "นางอำพร เลยกลาง", "age": 78, "right": "", "house_no": "17", "moo": 10, "village": "บ้านศาลา", "tambon": "ยางสว่าง", "status": "ติดเตียง", "adl": 4, "disease": "", "note": "", "lat": 15.294544, "lon": 103.970313, "code": "YSC-053", "default_cg": "CG-13"}, {"seq": 54, "cid": "3-3207-00193-89-0", "hn": "", "name": "นายแสวง แผ่นแก้ว", "age": 62, "right": "", "house_no": "121", "moo": 11, "village": "บ้านหนองบัวศรีสว่าง", "tambon": "ยางสว่าง", "status": "ติดเตียง", "adl": 2, "disease": "", "note": "", "lat": 15.308539, "lon": 103.998004, "code": "YSC-054", "default_cg": "UNASSIGNED"}, {"seq": 55, "cid": "3-3207-00193-19-9", "hn": "", "name": "นางอ่อน ทองภู", "age": 85, "right": "", "house_no": "101", "moo": 11, "village": "บ้านหนองบัวศรีสว่าง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.309416, "lon": 103.998348, "code": "YSC-055", "default_cg": "UNASSIGNED"}, {"seq": 56, "cid": "3-3207-00191-11-1", "hn": "", "name": "นางสิน พิมพ์ประจบ", "age": 67, "right": "", "house_no": "4", "moo": 11, "village": "บ้านหนองบัวศรีสว่าง", "tambon": "ยางสว่าง", "status": "ติดบ้าน", "adl": 11, "disease": "", "note": "", "lat": 15.314856, "lon": 103.999923, "code": "YSC-056", "default_cg": "UNASSIGNED"}];
+    const CGS = [{"id": "CG-01", "seq": 1, "person_id": "718", "hn": "708", "name": "นางทองสุข ปลื้มจิต", "age": "60 ปี 2 เดือน", "house_no": "92", "moo": 1, "village": "บ้านยาง", "cid": "3320700198298", "dob": "1/9/2509", "edu": "ก่อนประถมศึกษา", "marital": "หม้าย"}, {"id": "CG-02", "seq": 2, "person_id": "1862", "hn": "1842", "name": "นางทัศธยา สาลี", "age": "42 ปี 7 เดือน", "house_no": "98", "moo": 4, "village": "บ้านกล้วย", "cid": "1320700002575", "dob": "16/4/2527", "edu": "ประถมศึกษา", "marital": "คู่"}, {"id": "CG-03", "seq": 3, "person_id": "1866", "hn": "1846", "name": "นางทัศนีย์ ฝากทอง", "age": "39 ปี 6 เดือน", "house_no": "120", "moo": 4, "village": "บ้านกล้วย", "cid": "1320700109493", "dob": "15/5/2530", "edu": "ประถมศึกษา", "marital": "คู่"}, {"id": "CG-04", "seq": 4, "person_id": "1553", "hn": "1535", "name": "นางนันทา สารติ", "age": "56 ปี 0 เดือน", "house_no": "45", "moo": 3, "village": "บ้านแก่นท้าว", "cid": "3320700498593", "dob": "17/11/2513", "edu": "ก่อนประถมศึกษา", "marital": "คู่"}, {"id": "CG-05", "seq": 5, "person_id": "2662", "hn": "2639", "name": "นางบรรจง หาญรุก", "age": "57 ปี 1 เดือน", "house_no": "57", "moo": 6, "village": "บ้านยางเตี้ย", "cid": "3320700574591", "dob": "27/9/2512", "edu": "ก่อนประถมศึกษา", "marital": "คู่"}, {"id": "CG-06", "seq": 6, "person_id": "1360", "hn": "1344", "name": "น.ส.ประนอม แสงไข", "age": "52 ปี 0 เดือน", "house_no": "12", "moo": 3, "village": "บ้านแก่นท้าว", "cid": "3320700499239", "dob": "20/10/2517", "edu": "ก่อนประถมศึกษา", "marital": "คู่"}, {"id": "CG-07", "seq": 7, "person_id": "1900", "hn": "1879", "name": "นางปลิตา สุกเหลือง", "age": "59 ปี 0 เดือน", "house_no": "48", "moo": 4, "village": "บ้านกล้วย", "cid": "3320700311744", "dob": "19/10/2510", "edu": "มัธยมศึกษาตอนปลาย หรือ ปวช.", "marital": "คู่"}, {"id": "CG-08", "seq": 8, "person_id": "3432", "hn": "3405", "name": "น.ส.ภัทรา จอมเกาะ", "age": "38 ปี 6 เดือน", "house_no": "163", "moo": 7, "village": "บ้านขะยูง", "cid": "1320700124433", "dob": "9/5/2531", "edu": "มัธยมศึกษาตอนต้น", "marital": "คู่"}, {"id": "CG-09", "seq": 9, "person_id": "2428", "hn": "2405", "name": "นางมลิวรรณ มีทะลา", "age": "65 ปี 7 เดือน", "house_no": "14/1", "moo": 6, "village": "บ้านยางเตี้ย", "cid": "3320700573200", "dob": "26/3/2504", "edu": "ก่อนประถมศึกษา", "marital": "คู่"}, {"id": "CG-10", "seq": 10, "person_id": "-", "hn": "-", "name": "นางรุ่งนภา จันทพันธ์", "age": "-", "house_no": "-", "moo": null, "village": "รอระบุหมู่", "cid": "-", "dob": "-", "edu": "-", "marital": "-"}, {"id": "CG-11", "seq": 11, "person_id": "3442", "hn": "3415", "name": "นางสมสี สุภาษา", "age": "58 ปี 0 เดือน", "house_no": "33", "moo": 7, "village": "บ้านขะยูง", "cid": "2320700003430", "dob": "10/11/2511", "edu": "ก่อนประถมศึกษา", "marital": "คู่"}, {"id": "CG-12", "seq": 12, "person_id": "1664", "hn": "1645", "name": "นางสุดารัตน์ บุดดี", "age": "42 ปี 6 เดือน", "house_no": "17", "moo": 4, "village": "บ้านกล้วย", "cid": "1320700002664", "dob": "11/5/2527", "edu": "ก่อนประถมศึกษา", "marital": "คู่"}, {"id": "CG-13", "seq": 13, "person_id": "4229", "hn": "4192", "name": "นางสุนันทา ศรีแก้ว", "age": "59 ปี 3 เดือน", "house_no": "20", "moo": 10, "village": "บ้านศาลา", "cid": "3320700580940", "dob": "12/8/2510", "edu": "มัธยมศึกษาตอนปลาย หรือ ปวช.", "marital": "คู่"}, {"id": "CG-14", "seq": 14, "person_id": "240", "hn": "240", "name": "นางเกศริน สุขเหลือง", "age": "56 ปี 4 เดือน", "house_no": "15", "moo": 1, "village": "บ้านยาง", "cid": "3320700330404", "dob": "3/7/2513", "edu": "ก่อนประถมศึกษา", "marital": "คู่"}, {"id": "CG-15", "seq": 15, "person_id": "4078", "hn": "4042", "name": "นางเสียง คำทองจักร", "age": "62 ปี 6 เดือน", "house_no": "72", "moo": 9, "village": "บ้านหนองตาด", "cid": "3320700578236", "dob": "1/5/2507", "edu": "ก่อนประถมศึกษา", "marital": "คู่"}];
+
+    // Storage helpers
+    const STORAGE_KEY = 'ltc_3c_plus_yangsawang_v1';
+    let appState = { done: {}, cgMap: {} };
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) appState = JSON.parse(saved);
+    } catch (e) {}
+
+    function saveState() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appState)); } catch (e) {}
+    }
+
+    function getAssignedCgId(p) {
+      return appState.cgMap[p.code] !== undefined ? appState.cgMap[p.code] : p.default_cg;
+    }
+
+    function getCgById(id) {
+      return CGS.find(c => c.id === id) || null;
+    }
+
+    // Build structured 2-part 3C Plus+ text per patient
+    function buildCarePlan(p) {
+      const isBed = p.status === 'ติดเตียง';
+      const cg = getCgById(getAssignedCgId(p));
+      const cgLabel = cg ? `${cg.name} (CG ${cg.moo ? 'ม.' + cg.moo : 'รอระบุหมู่'})` : 'รอมอบหมาย CG (ประสานหมู่ใกล้เคียง)';
+      const isStroke = p.disease && p.disease.toLowerCase().includes('stroke');
+      const isMonk = p.name.startsWith('พระ');
+      const isYoung = p.age < 60;
+
+      // Part 1: เสนอของบประมาณ
+      const tai = isBed ? 'TAI (I1–I3)' : 'TAI (B3–B5)';
+      const assessments = isBed
+        ? 'ADL 10 ข้อ, TAI (I1–I3), PPS, GDS/FAST, TMSE, MNA®, Fall Risk & บ้าน 9 ข้อ'
+        : `ADL 10 ข้อ, TAI (B3–B5), TMSE, MNA®, Fall Risk & ${isMonk ? 'สภาพที่พัก 9 ข้อ' : 'บ้าน 9 ข้อ'}`;
+
+      let problem = `${tai} อายุ ${p.age} ปี (${p.status} ADL ${p.adl})`;
+      if (isStroke) problem += ' มีโรคประจำตัว Stroke เสี่ยงสำลัก/แผลกดทับ/ข้อติดแข็ง';
+      else if (isBed) problem += ' เสี่ยงแผลกดทับ/ติดเชื้อ/ภาวะขาดสารอาหาร';
+      else if (p.adl <= 8) problem += ' คะแนน ADL ค่อนข้างต่ำ เสี่ยงหกล้มและถดถอยเป็นติดเตียง';
+      else problem += ' เสี่ยงพลัดตกหกล้มและภาวะทุพโภชนาการ/สมองเสื่อม';
+      if (!p.cid) problem += ' [ต้องเติมเลขบัตร 13 หลัก]';
+      if (p.seq === 37) problem += ' [ตรวจหมู่ที่ ม.6 vs ม.7]';
+
+      const shortGoal = isBed
+        ? (isStroke ? 'ไม่มีแผลกดทับ/สำลัก และเริ่มฟื้นฟูข้อต่อ ภายใน 1–3 เดือน' : 'ไม่มีแผลกดทับ/การติดเชื้อ และได้รับโภชนาการเหมาะสม ภายใน 1–3 เดือน')
+        : `คงระดับ ADL ${p.adl} ป้องกันการพลัดตกหกล้มและภาวะแทรกซ้อน ภายใน 1–3 เดือน`;
+
+      const policyFund = isBed
+        ? `ตรวจแถบเขียวครบทุกหัวข้อ; ${isStroke ? 'กรอก ICD-10 Stroke; ' : ''}ประเมินผ้าอ้อมผู้ใหญ่/แผ่นรองซับ (แยกกองทุน LTC vs กปท. ให้ชัด); เป้าหมาย 5 ด้านระยะยาว (${isStroke ? 'ฟื้นฟู/กายภาพ/กลืน' : 'ประคับประคอง'})`
+        : 'ตรวจแถบเขียวครบทุกหัวข้อ; กรอกความเปราะบาง/ICD-10/สวัสดิการ/ที่อยู่อาศัย; ประเมินผ้าอ้อม/กองทุน LTC-กปท.; เป้าหมาย 5 ด้านระยะยาว (คงสมรรถภาพ)';
+
+      // Part 2: แผนปฏิบัติงานจริง
+      const mindset = isBed
+        ? (isStroke ? 'ผู้ป่วย/ญาติ: ยอมรับการฟื้นฟูหลัง Stroke ร่วมพลิกตะแคงตัวและฝึกกลืนทุกวัน' : 'ผู้สูงอายุ/ญาติ: ร่วมดูแลการพลิกตะแคงตัว ความสะอาด ขับถ่าย และอาหารทุกวัน')
+        : (isMonk ? 'พระภิกษุ/ศิษย์วัด: ร่วมดูแลกิจวัตร การฉันอาหาร และความปลอดภัยรอบกุฏิ' : 'ผู้สูงอายุ/ญาติ: ร่วมดูแลกิจวัตรพื้นฐาน โภชนาการ และปรับสภาพแวดล้อมบ้านให้ปลอดภัย');
+
+      const doctorTeam = isBed
+        ? (isStroke ? 'CM/รพ.สต. + นักกายภาพบำบัด เยี่ยมฟื้นฟู ฝึกกลืน ประเมินระบบประสาท และคุมปัจจัยเสี่ยง Stroke ซ้ำ' : 'CM/รพ.สต. เยี่ยมประเมินแผลกดทับ ภาวะโภชนาการ MNA® และเฝ้าระวังอาการฉุกเฉิน')
+        : 'CM/รพ.สต. เยี่ยมติดตามประเมิน 4 ด้าน (ADL, Fall Risk, MNA®, TMSE) และทบทวนสภาพบ้าน 9 ข้อ';
+
+      const weekly = isBed
+        ? 'ตาราง จ.–อา. (11 ด้าน แบ่ง CG/ญาติ): พลิกตะแคงตัวทุก 2 ชม. เช็ดตัว/เปลี่ยนผ้าอ้อม กายภาพข้อต่อ ให้อาหารอ่อน/เหลว และวัดสัญญาณชีพ'
+        : 'ตาราง จ.–อา. (11 ด้าน แบ่ง CG/ญาติ): ช่วยเหลือกิจวัตร เตรียมอาหารครบหมู่ ออกกำลังกายเบา/ฝึกเดิน จัดยา และเฝ้าระวังการหกล้ม';
+
+      const extraSvc = isBed
+        ? 'ผ้าอ้อม/แผ่นรองซับ (แยกกองทุน LTC/กปท.), ที่นอนลม/กายอุปกรณ์/อุปกรณ์แพทย์ และบริการนอกรายสัปดาห์'
+        : 'บริการนอกรายสัปดาห์: ปรับสภาพแวดล้อมบ้าน/ราวจับ/แสงสว่าง พาพบแพทย์ตามนัด และรับยาต่อเนื่อง';
+
+      const cgAssign = isBed
+        ? `มอบหมาย ${cgLabel} (Active) เยี่ยมดูแล 3–5 ครั้ง/สัปดาห์ (ระบุ ชม./นาที เข้มข้น) ร่วมกับญาติทุกวัน`
+        : `มอบหมาย ${cgLabel} (Active) เยี่ยมดูแล ${p.adl <= 8 ? '2–3' : '1–2'} ครั้ง/สัปดาห์ (ระบุ ชม./นาที) ร่วมกับญาติ`;
+
+      let caution = isBed
+        ? 'ระวังแผลกดทับ การติดเชื้อทางเดินหายใจ/ขับถ่าย และขาดสารอาหาร; ประเมิน ADL/PPS/GDS หลังดูแลครบ 10–12 ด.'
+        : 'ระวังพลัดตกหกล้มและภาวะสมองบกพร่อง/ทุพโภชนาการ; ประเมิน ADL หลังดูแลครบ 10–12 ด. เพื่อปิดเคส';
+      if (isYoung && isBed) caution = 'กลุ่มอายุต่ำกว่า 60 ปีที่เป็นติดเตียง ' + caution;
+      if (p.seq === 8 || p.seq === 9) caution = 'ครัวเรือนเดียวกับ บ.13 ม.2 ระวังสร้างข้อมูลบ้านซ้ำใน 3C+; ' + caution;
+      if (p.seq === 31 || p.seq === 32) caution = 'ครัวเรือนเดียวกับ บ.111 ม.7 ระวังสร้างข้อมูลบ้านซ้ำใน 3C+; ' + caution;
+      if (p.seq === 33 || p.seq === 34) caution = 'ครัวเรือนเดียวกับ บ.14 ม.7 ระวังสร้างข้อมูลบ้านซ้ำใน 3C+; ' + caution;
+
+      const part1Summary = `[ประเมิน 4 ด้าน] ${assessments}
+[ประเด็นปัญหา] ${problem}
+[เป้าหมาย <3 ด.] ${shortGoal}
+[งบ/กองทุน] ${policyFund}`;
+      const part2Summary = `[แนวคิด] ${mindset}
+[ทีมหมอครอบครัว] ${doctorTeam}
+[ตาราง จ.-อา.] ${weekly}
+[บริการนอกสัปดาห์] ${extraSvc}
+[มอบหมาย CG] ${cgAssign}
+[ติดตาม/ปิดเคส] ${caution}`;
+
+      return {
+        cgLabel, assessments, problem, shortGoal, policyFund,
+        mindset, doctorTeam, weekly, extraSvc, cgAssign, caution,
+        part1Summary, part2Summary
+      };
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastText').textContent = msg;
+      toast.classList.remove('hidden');
+      toast.classList.add('flex');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+        toast.classList.remove('flex');
+      }, 2200);
+    }
+
+    function copyText(text, label = 'ข้อมูล') {
+      const done = () => showToast(`คัดลอก ${label} แล้ว`);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+      } else {
+        fallbackCopy(text, done);
+      }
+    }
+
+    function fallbackCopy(text, cb) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      cb();
+    }
+
+    function populateFilters() {
+      const mooSel = document.getElementById('filterMoo');
+      const moos = [...new Set(PATIENTS.map(p => p.moo))].sort((a, b) => a - b);
+      moos.forEach(m => {
+        const vName = PATIENTS.find(p => p.moo === m)?.village || '';
+        const opt = document.createElement('option');
+        opt.value = String(m);
+        opt.textContent = `หมู่ ${m} ${vName}`;
+        mooSel.appendChild(opt);
+      });
+
+      const cgSel = document.getElementById('filterCg');
+      CGS.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = `${c.name} (${c.moo ? 'ม.' + c.moo : 'รอระบุหมู่'})`;
+        cgSel.appendChild(opt);
+      });
+    }
+
+    function updateProgressKpi() {
+      const doneCount = PATIENTS.filter(p => !!appState.done[p.code]).length;
+      document.getElementById('kpiDoneCount').textContent = `${doneCount} / 56`;
+      document.getElementById('kpiDoneBar').style.width = `${Math.round((doneCount / 56) * 100)}%`;
+    }
+
+    function getFilteredPatients() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const moo = document.getElementById('filterMoo').value;
+      const status = document.getElementById('filterStatus').value;
+      const cg = document.getElementById('filterCg').value;
+      const doneFilter = document.getElementById('filterDone').value;
+
+      return PATIENTS.filter(p => {
+        const assigned = getAssignedCgId(p);
+        if (moo !== 'ALL' && String(p.moo) !== moo) return false;
+        if (status !== 'ALL' && p.status !== status) return false;
+        if (cg !== 'ALL' && assigned !== cg) return false;
+        const isDone = !!appState.done[p.code];
+        if (doneFilter === 'DONE' && !isDone) return false;
+        if (doneFilter === 'PENDING' && isDone) return false;
+        if (q) {
+          const hay = `${p.code} ${p.name} ${p.cid} ${p.house_no} ม.${p.moo} ${p.village} ${p.disease}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderTable() {
+      const list = getFilteredPatients();
+      document.getElementById('resultCounter').textContent = `แสดง ${list.length} จาก ${PATIENTS.length} รายการ`;
+      const tbody = document.getElementById('patientTableBody');
+
+      if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-slate-400">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(p => {
+        const cp = buildCarePlan(p);
+        const isDone = !!appState.done[p.code];
+        const isBed = p.status === 'ติดเตียง';
+        const assignedId = getAssignedCgId(p);
+        const badgeCls = isBed
+          ? 'bg-rose-50 text-rose-700 border-rose-200'
+          : 'bg-sky-50 text-sky-700 border-sky-200';
+        const gpsStr = `${p.lat}, ${p.lon}`;
+        const cidDisplay = p.cid || 'รอเติม 13 หลัก';
+
+        const cgOptions = [
+          `<option value="UNASSIGNED" ${assignedId === 'UNASSIGNED' ? 'selected' : ''}>-- รอจัดสรร CG --</option>`,
+          ...CGS.map(c => `<option value="${c.id}" ${assignedId === c.id ? 'selected' : ''}>${c.name} (${c.moo ? 'ม.' + c.moo : 'รอหมู่'})</option>`)
+        ].join('');
+
+        return `
+          <tr class="${isDone ? 'bg-emerald-50/40' : 'hover:bg-slate-50/80'} transition">
+            <td class="px-3 py-3 text-center align-top">
+              <input type="checkbox" data-done="${p.code}" ${isDone ? 'checked' : ''} class="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer" title="ทำเครื่องหมายว่าลง 3C Plus+ แล้ว" />
+              <div class="mt-1 text-[10px] font-semibold ${isDone ? 'text-emerald-700' : 'text-slate-400'}">${p.code}</div>
+            </td>
+            <td class="px-3 py-3 align-top">
+              <div class="font-semibold text-slate-900">${p.seq}. ${p.name}</div>
+              <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                <span class="rounded-md border px-1.5 py-0.5 text-[11px] font-semibold ${badgeCls}">${p.status} • ADL ${p.adl}</span>
+                <span class="text-[11px] text-slate-500">${p.age} ปี</span>
+              </div>
+              <div class="mt-1 text-[11px] text-slate-600">บ.${p.house_no} ม.${p.moo} ${p.village}</div>
+              ${p.disease ? `<div class="mt-1 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">โรค: ${p.disease}</div>` : ''}
+            </td>
+            <td class="px-3 py-3 align-top space-y-1.5">
+              <div class="flex items-center justify-between gap-1 rounded-lg border ${p.cid ? 'border-slate-200 bg-slate-50' : 'border-rose-300 bg-rose-50'} px-2 py-1">
+                <span class="font-mono text-[11px] ${p.cid ? 'text-slate-700' : 'text-rose-700 font-semibold'}">${cidDisplay}</span>
+                ${p.cid ? `<button type="button" data-copy-text="${encodeURIComponent(p.cid)}" data-copy-label="เลขบัตร ${p.code}" class="copy-btn text-teal-600 hover:text-teal-800" title="คัดลอกเลขบัตร"><i data-lucide="copy" class="h-3.5 w-3.5"></i></button>` : ''}
+              </div>
+              <div class="flex items-center justify-between gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1">
+                <span class="font-mono text-[10px] text-slate-600">${gpsStr}</span>
+                <button type="button" data-copy-text="${encodeURIComponent(gpsStr)}" data-copy-label="พิกัด GPS ${p.code}" class="copy-btn text-teal-600 hover:text-teal-800" title="คัดลอกพิกัด"><i data-lucide="map-pin" class="h-3.5 w-3.5"></i></button>
+              </div>
+            </td>
+            <td class="px-3 py-3 align-top">
+              <select data-cg-select="${p.code}" class="w-full rounded-lg border ${assignedId === 'UNASSIGNED' ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-slate-200 bg-white text-slate-800'} px-2 py-1.5 text-xs focus:border-teal-500 focus:outline-none">
+                ${cgOptions}
+              </select>
+              <div class="mt-1 text-[10px] text-slate-500">${isBed ? 'เยี่ยม 3–5 ครั้ง/สัปดาห์' : (p.adl <= 8 ? 'เยี่ยม 2–3 ครั้ง/สัปดาห์' : 'เยี่ยม 1–2 ครั้ง/สัปดาห์')}</div>
+            </td>
+            <td class="px-3 py-3 align-top">
+              <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-2 text-[11px] leading-relaxed text-slate-700">
+                <div><strong>ประเมิน:</strong> ${cp.assessments}</div>
+                <div class="mt-0.5"><strong>เป้าหมาย &lt;3 ด.:</strong> ${cp.shortGoal}</div>
+                <div class="mt-0.5 text-teal-800"><strong>กองทุน:</strong> ${cp.policyFund}</div>
+              </div>
+              <button type="button" data-copy-text="${encodeURIComponent(cp.part1Summary)}" data-copy-label="ส่วนที่ 1 (${p.code})" class="copy-btn mt-1.5 inline-flex items-center gap-1 rounded-lg bg-teal-50 px-2 py-1 text-[11px] font-semibold text-teal-700 hover:bg-teal-100">
+                <i data-lucide="clipboard-copy" class="h-3 w-3"></i> คัดลอกส่วนที่ 1
+              </button>
+            </td>
+            <td class="px-3 py-3 align-top">
+              <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-2 text-[11px] leading-relaxed text-slate-700">
+                <div><strong>ตาราง จ.–อา.:</strong> ${cp.weekly}</div>
+                <div class="mt-0.5 text-indigo-800"><strong>มอบหมาย CG:</strong> ${cp.cgAssign}</div>
+              </div>
+              <button type="button" data-copy-text="${encodeURIComponent(cp.part2Summary)}" data-copy-label="ส่วนที่ 2 (${p.code})" class="copy-btn mt-1.5 inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-1 text-[11px] font-semibold text-indigo-700 hover:bg-indigo-100">
+                <i data-lucide="clipboard-copy" class="h-3 w-3"></i> คัดลอกส่วนที่ 2
+              </button>
+            </td>
+            <td class="px-3 py-3 text-center align-top">
+              <button type="button" data-open-modal="${p.code}" class="inline-flex items-center gap-1 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700 transition">
+                <i data-lucide="maximize-2" class="h-3.5 w-3.5"></i>
+                <span>เปิดการ์ด</span>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function renderCgGrid() {
+      const grid = document.getElementById('cgCardsGrid');
+      grid.innerHTML = CGS.map(c => {
+        const assigned = PATIENTS.filter(p => getAssignedCgId(p) === c.id);
+        const bedCount = assigned.filter(p => p.status === 'ติดเตียง').length;
+        const homeCount = assigned.length - bedCount;
+        const loadColor = assigned.length >= 6 ? 'border-rose-300 bg-rose-50 text-rose-700' : (assigned.length > 0 ? 'border-teal-200 bg-teal-50 text-teal-700' : 'border-slate-200 bg-slate-50 text-slate-500');
+
+        return `
+          <div class="bento-card flex flex-col justify-between p-4">
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <span class="text-[11px] font-semibold text-slate-400">${c.id} • Person ID: ${c.person_id} • HN: ${c.hn}</span>
+                  <h3 class="font-heading text-base font-bold text-slate-900 mt-0.5">${c.seq}. ${c.name}</h3>
+                  <p class="text-xs text-slate-600">${c.moo ? `หมู่ ${c.moo} ${c.village} บ.${c.house_no}` : 'รอระบุหมู่บ้าน/ที่อยู่'}</p>
+                </div>
+                <span class="rounded-xl border px-2.5 py-1 text-xs font-bold ${loadColor}">${assigned.length} ราย</span>
+              </div>
+              <div class="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-slate-50 p-2.5 text-xs text-slate-600">
+                <div><strong>อายุ:</strong> ${c.age}</div>
+                <div><strong>สถานภาพ:</strong> ${c.marital}</div>
+                <div class="col-span-2 flex items-center justify-between">
+                  <span><strong>เลขบัตร:</strong> <span class="font-mono">${c.cid}</span></span>
+                  ${c.cid !== '-' ? `<button type="button" data-copy-text="${encodeURIComponent(c.cid)}" data-copy-label="เลขบัตร CG" class="text-teal-600 hover:text-teal-800"><i data-lucide="copy" class="h-3.5 w-3.5"></i></button>` : ''}
+                </div>
+              </div>
+              <div class="mt-3 flex items-center gap-2 text-xs">
+                <span class="rounded-lg bg-rose-50 px-2 py-1 font-semibold text-rose-700">ติดเตียง: ${bedCount}</span>
+                <span class="rounded-lg bg-sky-50 px-2 py-1 font-semibold text-sky-700">ติดบ้าน: ${homeCount}</span>
+              </div>
+            </div>
+            <div class="mt-4 border-t border-slate-100 pt-3 flex items-center justify-between">
+              <span class="text-[11px] text-slate-500 truncate max-w-[180px]">${assigned.length ? assigned.map(p => p.code).join(', ') : 'ยังไม่มีเคสในความดูแล'}</span>
+              <button type="button" data-jump-cg="${c.id}" class="text-xs font-semibold text-teal-700 hover:text-teal-900 inline-flex items-center gap-1">
+                <span>ดูรายชื่อ</span>
+                <i data-lucide="arrow-right" class="h-3.5 w-3.5"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function openDetailModal(code) {
+      const p = PATIENTS.find(x => x.code === code);
+      if (!p) return;
+      const cp = buildCarePlan(p);
+      document.getElementById('modalCode').textContent = p.code;
+      document.getElementById('modalTitle').textContent = `${p.seq}. ${p.name} (${p.age} ปี)`;
+      document.getElementById('modalSubtitle').textContent = `บ.${p.house_no} ม.${p.moo} ${p.village} ต.${p.tambon} • ${p.status} (ADL ${p.adl}) • CG: ${cp.cgLabel}`;
+
+      const copyBlock = (title, content, tone = 'slate') => `
+        <div class="rounded-2xl border border-${tone}-200 bg-${tone}-50/50 p-3.5">
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <span class="text-xs font-bold text-${tone}-800">${title}</span>
+            <button type="button" data-copy-text="${encodeURIComponent(content)}" data-copy-label="${title}" class="copy-btn inline-flex items-center gap-1 rounded-lg bg-white border border-${tone}-200 px-2.5 py-1 text-[11px] font-semibold text-${tone}-700 hover:bg-${tone}-100">
+              <i data-lucide="copy" class="h-3 w-3"></i> คัดลอก
+            </button>
+          </div>
+          <p class="text-xs leading-relaxed text-slate-700 whitespace-pre-line">${content}</p>
+        </div>
+      `;
+
+      document.getElementById('modalBody').innerHTML = `
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          ${copyBlock('เลขประจำตัวประชาชน 13 หลัก', p.cid || 'ไม่พบในไฟล์ — กรุณาตรวจสอบจากบัตรประชาชน/HOSxP', 'slate')}
+          ${copyBlock('พิกัด GPS (Latitude, Longitude)', `${p.lat}, ${p.lon}`, 'slate')}
+          ${copyBlock('HN / สิทธิ์ / โรคประจำตัว', `HN: ${p.hn || '-'} | สิทธิ์: ${p.right || '-'} | โรค: ${p.disease || '-'}`, 'slate')}
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-heading text-sm font-bold text-teal-800">ส่วนที่ 1: เสนอของบประมาณ (3C Plus+)</h3>
+            <button type="button" data-copy-text="${encodeURIComponent(cp.part1Summary)}" data-copy-label="ส่วนที่ 1 ทั้งหมด" class="copy-btn rounded-xl bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-700">คัดลอกส่วนที่ 1 ทั้งหมด</button>
+          </div>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            ${copyBlock('การประเมิน 4 ด้าน & ความต้องการ', cp.assessments, 'teal')}
+            ${copyBlock('ประเด็นปัญหา (4 ด้าน / ความเปราะบาง)', cp.problem, 'teal')}
+            ${copyBlock('เป้าหมายระยะสั้น (<3 เดือน)', cp.shortGoal, 'teal')}
+            ${copyBlock('แนวนโยบายระยะยาว & กองทุน (LTC / กปท.)', cp.policyFund, 'teal')}
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-heading text-sm font-bold text-indigo-800">ส่วนที่ 2: แผนปฏิบัติงานจริง (3C Plus+)</h3>
+            <button type="button" data-copy-text="${encodeURIComponent(cp.part2Summary)}" data-copy-label="ส่วนที่ 2 ทั้งหมด" class="copy-btn rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700">คัดลอกส่วนที่ 2 ทั้งหมด</button>
+          </div>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            ${copyBlock('แนวคิดผู้สูงอายุ / ญาติ', cp.mindset, 'indigo')}
+            ${copyBlock('การดูแลโดยทีมหมอครอบครัว', cp.doctorTeam, 'indigo')}
+            ${copyBlock('กำหนดการรายสัปดาห์ (จ.–อา. 11 ด้าน)', cp.weekly, 'indigo')}
+            ${copyBlock('บริการนอกรายสัปดาห์ / กายอุปกรณ์ / ผ้าอ้อม', cp.extraSvc, 'indigo')}
+            ${copyBlock('การมอบหมาย CG (Active) & ชั่วโมงดูแล', cp.cgAssign, 'indigo')}
+            ${copyBlock('ข้อควรระวัง & การติดตามปิดเคส (10–12 ด.)', cp.caution, 'amber')}
+          </div>
+        </div>
+      `;
+
+      const modal = document.getElementById('detailModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('detailModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function exportCsv() {
+      const headers = [
+        'รหัส', 'ลำดับ', 'เลขบัตรประชาชน', 'HN', 'ชื่อ-สกุล', 'อายุ', 'บ้านเลขที่', 'หมู่ที่', 'หมู่บ้าน',
+        'สถานะ', 'ADL', 'โรคประจำตัว', 'Latitude', 'Longitude', 'CG ผู้รับผิดชอบ',
+        'ส่วนที่ 1 (เสนอของบประมาณ)', 'ส่วนที่ 2 (แผนปฏิบัติงานจริง)', 'สถานะลง 3C+'
+      ];
+      const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const rows = PATIENTS.map(p => {
+        const cp = buildCarePlan(p);
+        return [
+          p.code, p.seq, p.cid, p.hn, p.name, p.age, p.house_no, p.moo, p.village,
+          p.status, p.adl, p.disease, p.lat, p.lon, cp.cgLabel,
+          cp.part1Summary.replace(/\n/g, ' | '), cp.part2Summary.replace(/\n/g, ' | '),
+          appState.done[p.code] ? 'บันทึกแล้ว' : 'รอดำเนินการ'
+        ].map(esc).join(',');
+      });
+      const csv = '\uFEFF' + [headers.map(esc).join(','), ...rows].join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '3C_Plus_YangSawang_56_Cases_With_CG.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('ส่งออกไฟล์ CSV สำหรับ Excel แล้ว');
+    }
+
+    // Map & Charts lazy init
+    let mapInstance = null;
+    let streetLayer = null;
+    let satLayer = null;
+    let chartsInitialized = false;
+
+    function initMapAndCharts() {
+      if (!mapInstance && window.L) {
+        mapInstance = L.map('ltcMap').setView([15.308, 103.982], 13);
+        streetLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles &copy; Esri'
+        }).addTo(mapInstance);
+        satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles &copy; Esri'
+        });
+
+        PATIENTS.forEach(p => {
+          const isBed = p.status === 'ติดเตียง';
+          const cp = buildCarePlan(p);
+          const marker = L.circleMarker([p.lat, p.lon], {
+            radius: isBed ? 8 : 6,
+            fillColor: isBed ? '#E11D48' : '#0D9488',
+            color: '#FFFFFF',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.9
+          }).addTo(mapInstance);
+          marker.bindPopup(`
+            <div style="font-family: Sarabun, sans-serif; min-width: 200px;">
+              <div style="font-weight: 700; font-size: 13px;">${p.code}: ${p.name} (${p.age} ปี)</div>
+              <div style="font-size: 12px; color: #475569; margin-top: 2px;">บ.${p.house_no} ม.${p.moo} ${p.village}</div>
+              <div style="font-size: 12px; margin-top: 4px;"><strong>${p.status}</strong> (ADL ${p.adl})</div>
+              <div style="font-size: 11px; color: #0F766E; margin-top: 2px;">CG: ${cp.cgLabel}</div>
+              <div style="font-size: 11px; font-family: monospace; margin-top: 4px;">${p.lat}, ${p.lon}</div>
+            </div>
+          `);
+        });
+      }
+      setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 150);
+
+      if (!chartsInitialized && window.Chart) {
+        chartsInitialized = true;
+        const moos = [...new Set(PATIENTS.map(p => p.moo))].sort((a, b) => a - b);
+        const homeByMoo = moos.map(m => PATIENTS.filter(p => p.moo === m && p.status === 'ติดบ้าน').length);
+        const bedByMoo = moos.map(m => PATIENTS.filter(p => p.moo === m && p.status === 'ติดเตียง').length);
+
+        new Chart(document.getElementById('chartVillage'), {
+          type: 'bar',
+          data: {
+            labels: moos.map(m => `ม.${m}`),
+            datasets: [
+              { label: 'ติดบ้าน (43)', data: homeByMoo, backgroundColor: '#0EA5E9', borderRadius: 4 },
+              { label: 'ติดเตียง (13)', data: bedByMoo, backgroundColor: '#E11D48', borderRadius: 4 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 2 } } }
+          }
+        });
+
+        const ageBuckets = [
+          { label: '<60 ปี', fn: a => a < 60 },
+          { label: '60–69 ปี', fn: a => a >= 60 && a <= 69 },
+          { label: '70–79 ปี', fn: a => a >= 70 && a <= 79 },
+          { label: '80–89 ปี', fn: a => a >= 80 && a <= 89 },
+          { label: '90+ ปี', fn: a => a >= 90 }
+        ];
+        new Chart(document.getElementById('chartAge'), {
+          type: 'bar',
+          data: {
+            labels: ageBuckets.map(b => b.label),
+            datasets: [
+              { label: 'ติดบ้าน', data: ageBuckets.map(b => PATIENTS.filter(p => b.fn(p.age) && p.status === 'ติดบ้าน').length), backgroundColor: '#14B8A6', borderRadius: 4 },
+              { label: 'ติดเตียง', data: ageBuckets.map(b => PATIENTS.filter(p => b.fn(p.age) && p.status === 'ติดเตียง').length), backgroundColor: '#F43F5E', borderRadius: 4 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 4 } } }
+          }
+        });
+      }
+    }
+
+    function switchTab(tab) {
+      const tabs = [
+        { id: 'table', btn: 'navTable', panel: 'panelTable' },
+        { id: 'cg', btn: 'navCg', panel: 'panelCg' },
+        { id: 'map', btn: 'navMap', panel: 'panelMap' },
+        { id: 'scanner', btn: 'navScanner', panel: 'panelScanner' }
+      ];
+      tabs.forEach(t => {
+        const b = document.getElementById(t.btn);
+        const p = document.getElementById(t.panel);
+        if (t.id === tab) {
+          b.className = 'tab-active inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition';
+          p.classList.remove('hidden');
+        } else {
+          b.className = 'tab-inactive inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold hover:bg-slate-50 transition';
+          p.classList.add('hidden');
+        }
+      });
+      if (tab === 'map') initMapAndCharts();
+      if (tab === 'cg') renderCgGrid();
+    }
+
+    // Event wiring
+    document.getElementById('navTable').addEventListener('click', () => switchTab('table'));
+    document.getElementById('navCg').addEventListener('click', () => switchTab('cg'));
+    document.getElementById('navMap').addEventListener('click', () => switchTab('map'));
+    document.getElementById('navScanner').addEventListener('click', () => switchTab('scanner'));
+    document.getElementById('btnExportCsv').addEventListener('click', exportCsv);
+    document.getElementById('btnCloseModal').addEventListener('click', closeModal);
+    document.getElementById('detailModal').addEventListener('click', e => {
+      if (e.target.id === 'detailModal') closeModal();
+    });
+
+    document.getElementById('btnResetState').addEventListener('click', () => {
+      appState = { done: {}, cgMap: {} };
+      saveState();
+      updateProgressKpi();
+      renderTable();
+      renderCgGrid();
+      showToast('รีเซ็ตสถานะและการจัดสรร CG เป็นค่าเริ่มต้นแล้ว');
+    });
+
+    document.getElementById('btnMapStreet').addEventListener('click', () => {
+      if (mapInstance && satLayer && streetLayer) {
+        mapInstance.removeLayer(satLayer);
+        streetLayer.addTo(mapInstance);
+      }
+      document.getElementById('btnMapStreet').className = 'rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white';
+      document.getElementById('btnMapSat').className = 'rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700';
+    });
+
+    document.getElementById('btnMapSat').addEventListener('click', () => {
+      if (mapInstance && satLayer && streetLayer) {
+        mapInstance.removeLayer(streetLayer);
+        satLayer.addTo(mapInstance);
+      }
+      document.getElementById('btnMapSat').className = 'rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white';
+      document.getElementById('btnMapStreet').className = 'rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700';
+    });
+
+    ['searchInput', 'filterMoo', 'filterStatus', 'filterCg', 'filterDone'].forEach(id => {
+      document.getElementById(id).addEventListener('input', renderTable);
+      document.getElementById(id).addEventListener('change', renderTable);
+    });
+
+    // Global click & change delegation
+    document.addEventListener('click', e => {
+      const copyBtn = e.target.closest('[data-copy-text]');
+      if (copyBtn) {
+        copyText(decodeURIComponent(copyBtn.dataset.copyText), copyBtn.dataset.copyLabel || 'ข้อมูล');
+        return;
+      }
+      const modalBtn = e.target.closest('[data-open-modal]');
+      if (modalBtn) {
+        openDetailModal(modalBtn.dataset.openModal);
+        return;
+      }
+      const jumpBtn = e.target.closest('[data-jump-cg]');
+      if (jumpBtn) {
+        document.getElementById('filterCg').value = jumpBtn.dataset.jumpCg;
+        switchTab('table');
+        renderTable();
+      }
+    });
+
+    document.addEventListener('change', e => {
+      if (e.target.matches('[data-done]')) {
+        const code = e.target.dataset.done;
+        appState.done[code] = e.target.checked;
+        saveState();
+        updateProgressKpi();
+        renderTable();
+      } else if (e.target.matches('[data-cg-select]')) {
+        const code = e.target.dataset.cgSelect;
+        appState.cgMap[code] = e.target.value;
+        saveState();
+        renderTable();
+        showToast(`อัปเดต CG สำหรับ ${code} แล้ว`);
+      }
+    });
+
+    // Init
+    populateFilters();
+    updateProgressKpi();
+    renderTable();
+    renderCgGrid();
+    if (window.lucide) lucide.createIcons();
+
+    // =========================================================================
+    // SMART BARTHEL ADL SCANNER MODULE (AI VISION + EDITOR + HISTORY + PRINT)
+    // =========================================================================
+    const BARTHEL_ITEMS = [
+      { key: 'feeding', no: 1, en: 'Feeding', shortTh: 'การรับประทานอาหาร', max: 2, options: [
+        { score: 0, text: 'ไม่สามารถตักอาหารเข้าปากได้ ต้องมีคนป้อนให้' },
+        { score: 1, text: 'ตักอาหารเองได้แต่ต้องมีคนช่วย เช่น ช่วยใช้ช้อนตักเตรียมไว้ให้หรือตัดเป็นเล็กๆ ไว้ล่วงหน้า' },
+        { score: 2, text: 'ตักอาหารและช่วยตัวเองได้เป็นปกติ' }
+      ]},
+      { key: 'grooming', no: 2, en: 'Grooming', shortTh: 'ล้างหน้า หวีผม แปรงฟัน', max: 1, options: [
+        { score: 0, text: 'ต้องการความช่วยเหลือ' },
+        { score: 1, text: 'ทำเองได้ (รวมทั้งที่ทำได้เองถ้าเตรียมอุปกรณ์ไว้ให้)' }
+      ]},
+      { key: 'transfer', no: 3, en: 'Transfer', shortTh: 'ลุกนั่งจากที่นอน/เตียงไปเก้าอี้', max: 3, options: [
+        { score: 0, text: 'ไม่สามารถนั่งได้ (นั่งแล้วจะล้มเสมอ) หรือต้องใช้คนสองคนช่วยกันยกขึ้น' },
+        { score: 1, text: 'ต้องการความช่วยเหลืออย่างมากจึงจะนั่งได้' },
+        { score: 2, text: 'ต้องการความช่วยเหลือบ้าง เช่น ช่วยพยุงเล็กน้อย' },
+        { score: 3, text: 'ทำได้เอง' }
+      ]},
+      { key: 'toilet', no: 4, en: 'Toilet use', shortTh: 'การใช้ห้องน้ำ', max: 2, options: [
+        { score: 0, text: 'ช่วยตัวเองไม่ได้' },
+        { score: 1, text: 'ทำเองได้บ้าง แต่ต้องการความช่วยเหลือในบางสิ่ง' },
+        { score: 2, text: 'ช่วยตัวเองได้ดี' }
+      ]},
+      { key: 'mobility', no: 5, en: 'Mobility', shortTh: 'การเคลื่อนที่ภายในห้อง/บ้าน', max: 3, options: [
+        { score: 0, text: 'เคลื่อนที่ไปไหนไม่ได้' },
+        { score: 1, text: 'ต้องใช้รถเข็นช่วยตัวเองให้เคลื่อนที่ได้เอง' },
+        { score: 2, text: 'เดินหรือเคลื่อนที่โดยมีคนช่วยพยุง' },
+        { score: 3, text: 'เดินหรือเคลื่อนที่ได้เอง' }
+      ]},
+      { key: 'dressing', no: 6, en: 'Dressing', shortTh: 'การสวมใส่เสื้อผ้า', max: 2, options: [
+        { score: 0, text: 'ต้องมีคนสวมใส่ให้ ช่วยตัวเองแทบไม่ได้' },
+        { score: 1, text: 'ช่วยตัวเองได้ประมาณร้อยละ 50 ที่เหลือต้องมีคนช่วย' },
+        { score: 2, text: 'ช่วยตัวเองได้ดี' }
+      ]},
+      { key: 'stairs', no: 7, en: 'Stairs', shortTh: 'การขึ้นลงบันได 1 ชั้น', max: 2, options: [
+        { score: 0, text: 'ไม่สามารถทำได้' },
+        { score: 1, text: 'ต้องการคนช่วย' },
+        { score: 2, text: 'ขึ้นลงได้เอง' }
+      ]},
+      { key: 'bathing', no: 8, en: 'Bathing', shortTh: 'การอาบน้ำ', max: 1, options: [
+        { score: 0, text: 'ต้องมีคนช่วยหรือทำให้' },
+        { score: 1, text: 'อาบน้ำเองได้' }
+      ]},
+      { key: 'bowels', no: 9, en: 'Bowels', shortTh: 'การกลั้นอุจจาระ (1 สัปดาห์)', max: 2, options: [
+        { score: 0, text: 'กลั้นไม่ได้ หรือต้องการการสวนอุจจาระอยู่เสมอ' },
+        { score: 1, text: 'กลั้นไม่ได้บางครั้ง (น้อยกว่า 1 ครั้ง/สัปดาห์)' },
+        { score: 2, text: 'กลั้นได้เป็นปกติ' }
+      ]},
+      { key: 'bladder', no: 10, en: 'Bladder', shortTh: 'การกลั้นปัสสาวะ (1 สัปดาห์)', max: 2, options: [
+        { score: 0, text: 'กลั้นไม่ได้ หรือใส่สายสวนปัสสาวะแต่ไม่สามารถดูแลเองได้' },
+        { score: 1, text: 'กลั้นไม่ได้บางครั้ง (น้อยกว่าวันละ 1 ครั้ง)' },
+        { score: 2, text: 'กลั้นได้เป็นปกติ' }
+      ]}
+    ];
+
+    const SAMPLE_CASE_DATA = {
+      id: 'sample-pan-nantaphan',
+      prefix: 'นาง', fullName: 'ปาน นันทพันธ์', age: 92, cid: '3-3207-00323-98-0', healthRight: 'บัตรทอง (UC) / ผู้สูงอายุ',
+      houseNo: '111', moo: '7', subdistrict: 'ต.ยางสว่าง อ.รัตนบุรี จ.สุรินทร์', gps: '15.323069, 103.978306',
+      diseases: '', caregiverStatus: 'มี ครอบครัวดูแล', caregiverInfo: '', welfare: '', club: '',
+      bladderMode: 'unconfirmed_incontinence', ltcGroup: 'group3',
+      adl: { feeding: 0, grooming: 0, transfer: 0, toilet: 0, mobility: 0, dressing: 0, stairs: 0, bathing: 0, bowels: 1, bladder: 0 },
+      aiNotes: 'ข้อมูลตัวอย่างจากทะเบียน YSC-031: คะแนนรวม ADL = 1 คะแนน กลุ่มติดเตียง (1B1282-Special PP) ครัวเรือนเดียวกับ YSC-032 นายเรือง นันทพันธ์'
+    };
+
+    const SCAN_STORAGE_KEY = 'smart_adl_3cplus_history_v1';
+    let capturedImages = [];
+    let currentScanData = null;
+    let scanActiveTab = 'all';
+    let cameraStream = null;
+    let currentFacingMode = 'environment';
+    let pendingDeleteHistoryId = null;
+
+    function escHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function makeCopyBtn(textValue, label, compact = false) {
+      const encText = encodeURIComponent(textValue || '');
+      const encLabel = encodeURIComponent(label || 'ข้อความ');
+      if (compact) {
+        return `<button type="button" data-copy-text="${encText}" data-copy-label="${encLabel}" class="no-print copy-btn inline-flex items-center gap-1 rounded-lg bg-slate-200 px-2 py-1 text-[11px] font-bold text-slate-800 hover:bg-slate-900 hover:text-white"><i data-lucide="copy" class="h-3 w-3"></i><span>คัดลอก</span></button>`;
+      }
+      return `<button type="button" data-copy-text="${encText}" data-copy-label="${encLabel}" class="no-print copy-btn inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-200 text-slate-800 hover:bg-slate-900 hover:text-white"><i data-lucide="copy" class="h-4 w-4"></i></button>`;
+    }
+
+    function calculateTotalAdl(adl) {
+      return BARTHEL_ITEMS.reduce((sum, item) => sum + (Number(adl[item.key]) || 0), 0);
+    }
+
+    function getSpecialPPInfo(total) {
+      if (total >= 12) return { code: '1B1280-Special PP', groupName: 'กลุ่มติดสังคม', range: '12–20 คะแนน' };
+      if (total >= 5) return { code: '1B1281-Special PP', groupName: 'กลุ่มติดบ้าน', range: '5–11 คะแนน' };
+      return { code: '1B1282-Special PP', groupName: 'กลุ่มติดเตียง', range: '0–4 คะแนน' };
+    }
+
+    function getLtcGroupDetails(k) {
+      const map = {
+        group1: { title: 'กลุ่มที่ 1 (ติดบ้าน)', shortDesc: 'เคลื่อนไหวได้บ้าง ไม่มีภาวะสมองเสื่อม', fullLabel: 'กลุ่มที่ 1 — ติดบ้านต้องการช่วยเหลือบางส่วน', goal: 'คงสภาพ ADL ป้องกันหกล้ม และป้องกันการเข้าสู่ติดเตียง', frequency: 'CG: 1–2 ครั้ง/สัปดาห์ | CM: 1 ครั้ง/เดือน' },
+        group2: { title: 'กลุ่มที่ 2 (ติดบ้าน ซับซ้อน)', shortDesc: 'ติดบ้านร่วมกับภาวะสมองเสื่อม/พฤติกรรม', fullLabel: 'กลุ่มที่ 2 — ติดบ้านที่มีภาวะสมองเสื่อม/ซับซ้อน', goal: 'ชะลอความเสื่อมสมอง ป้องกันพลัดหลง/หกล้ม', frequency: 'CG: 2 ครั้ง/สัปดาห์ | CM: 1–2 ครั้ง/เดือน' },
+        group3: { title: 'กลุ่มที่ 3 (ติดเตียง พึ่งพิงสูง)', shortDesc: 'ติดเตียง/เรื้อรัง ไม่มีภาวะแทรกซ้อนรุนแรง', fullLabel: 'กลุ่มที่ 3 — ติดเตียงพึ่งพิงสูง (ไม่มีแทรกซ้อนรุนแรง)', goal: 'ป้องกันแผลกดทับ ปอดอักเสบ ข้อติด และติดเชื้อทางเดินปัสสาวะ', frequency: 'CG: 2–3 ครั้ง/สัปดาห์ | CM: 1–2 ครั้ง/เดือน' },
+        group4: { title: 'กลุ่มที่ 4 (ติดเตียง ซับซ้อน/ระยะท้าย)', shortDesc: 'ติดเตียงมีภาวะแทรกซ้อนรุนแรง/หัตถการซับซ้อน', fullLabel: 'กลุ่มที่ 4 — ติดเตียงแทรกซ้อนรุนแรง/ระยะท้าย', goal: 'บรรเทาอาการ ดูแลหัตถการปลอดภัย (Palliative Care)', frequency: 'CG: 3+ ครั้ง/สัปดาห์ | CM: 2–4 ครั้ง/เดือน' },
+        social: { title: 'กลุ่มติดสังคม', shortDesc: 'ADL ≥ 12 ช่วยเหลือตนเองได้', fullLabel: 'กลุ่มติดสังคม (1B1280-Special PP)', goal: 'ส่งเสริมสุขภาพ ป้องกัน NCD และหกล้ม', frequency: 'อสม./รพ.สต. คัดกรองซ้ำทุก 6–12 เดือน' }
+      };
+      return map[k] || map.group3;
+    }
+
+    function evaluateDiaperEligibility(data, total) {
+      const hasAdl = total <= 6;
+      const hasIncont = (data.adl.bladder < 2) || (data.adl.bowels < 2);
+      if (hasAdl && hasIncont) {
+        return { pill: 'เข้าเกณฑ์ชัดเจน', title: 'ขอรับสิทธิผ้าอ้อม กปท. ได้', reason: `ADL = ${total} (≤ 6) และกลั้นขับถ่ายไม่ได้`, carePlanText: 'ขอสนับสนุนผ้าอ้อมผู้ใหญ่/แผ่นรองซับ (ไม่เกิน 3 ชิ้น/วัน ตามเกณฑ์ กปท. สปสช.) และพิจารณาที่นอนลม' };
+      }
+      if (hasAdl) {
+        return { pill: 'เข้าเกณฑ์ ADL ≤ 6', title: 'เข้าเกณฑ์พิจารณาผ้าอ้อม กปท.', reason: `ADL = ${total} (≤ 6 คะแนน)`, carePlanText: 'ประเมินขอรับผ้าอ้อมผู้ใหญ่/แผ่นรองซับตามความจำเป็นจริง (ไม่เกิน 3 ชิ้น/วัน)' };
+      }
+      return { pill: 'ยังไม่เข้าเกณฑ์', title: 'ยังไม่เข้าเกณฑ์ผ้าอ้อม กปท.', reason: `ADL = ${total} (> 6) และกลั้นขับถ่ายปกติ`, carePlanText: 'ยังไม่จำเป็นต้องใช้ผ้าอ้อม พิจารณาราวจับหรืออุปกรณ์ช่วยเดิน' };
+    }
+
+    function buildClinicalAlerts(data, total) {
+      const alerts = [];
+      if (data.aiNotes) alerts.push(`<strong>ข้อสังเกต:</strong> ${escHtml(data.aiNotes)}`);
+      if (total <= 4) alerts.push('<strong>ยืนยันกลุ่ม LTC (กลุ่ม 3 vs 4):</strong> ADL 0–4 คะแนน กรุณายืนยันผล TAI และภาวะแทรกซ้อนก่อนบันทึก');
+      if (data.adl.bladder === 0 && data.bladderMode === 'unconfirmed_incontinence') alerts.push('<strong>ยืนยันข้อ 10 (Bladder = 0):</strong> ตรวจสอบหน้างานว่ากลั้นไม่ได้หรือคาสายสวน Foley\'s Cath');
+      const missing = [];
+      if (!data.cid) missing.push('เลขบัตร 13 หลัก');
+      if (!data.healthRight) missing.push('สิทธิการรักษา');
+      if (!data.gps) missing.push('พิกัด GPS');
+      if (missing.length) alerts.push(`<strong>ข้อมูลที่ต้องเติมเพิ่ม:</strong> ${missing.join(', ')}`);
+      return alerts.length ? alerts : ['ข้อมูลครบถ้วนพร้อมบันทึกเข้าสู่ 3C Plus+ แล้ว'];
+    }
+
+    function buildScannerCarePlanRows(data, total) {
+      const rows = [];
+      const adl = data.adl;
+      if (adl.feeding < 2) rows.push({ domain: '1. โภชนาการ/การป้อนอาหาร', adlRef: `Feeding = ${adl.feeding}`, problem: 'รับประทานอาหารเองไม่ได้/ต้องมีคนช่วย เสี่ยงขาดสารอาหารและสำลัก', cm: 'ประเมินภาวะโภชนาการ MNA® และการกลืน แนะนำอาหารอ่อนย่อยง่าย', cg: 'จัดท่าศีรษะสูง 45–90 องศาขณะป้อนและหลังป้อน 30 นาที เฝ้าระวังการสำลัก' });
+      if (adl.transfer === 0 || adl.mobility === 0) rows.push({ domain: '2. การเคลื่อนไหว/ป้องกันแผลกดทับ', adlRef: `Transfer=${adl.transfer}, Mobility=${adl.mobility}`, problem: 'ติดเตียง เคลื่อนไหวเองไม่ได้ เสี่ยงแผลกดทับและข้อติดแข็ง', cm: 'ประเมิน Braden Scale ตรวจปุ่มกระดูก สอนกายภาพ Passive Exercise', cg: 'พลิกตะแคงตัวทุก 2 ชม. บริหารข้อต่อแขน-ขา และดูแลผ้าปูที่นอนให้แห้งเรียบ' });
+      else if (adl.transfer < 3 || adl.mobility < 3) rows.push({ domain: '2. การเคลื่อนไหว/ป้องกันหกล้ม', adlRef: `Transfer=${adl.transfer}, Mobility=${adl.mobility}`, problem: 'ต้องมีผู้ช่วยพยุง เสี่ยงพลัดตกหกล้ม', cm: 'ประเมิน Fall Risk และสภาพบ้าน 9 ข้อ ฝึกใช้อุปกรณ์ช่วยเดิน', cg: 'พยุงและเฝ้าระวังขณะเดิน-ลุกยืน จัดทางเดินให้โล่งมีแสงสว่าง' });
+      if (adl.grooming === 0 || adl.bathing === 0 || adl.dressing < 2) rows.push({ domain: '3. สุขอนามัยส่วนบุคคล', adlRef: `Bathing=${adl.bathing}, Dressing=${adl.dressing}`, problem: 'ช่วยเหลือตนเองในการอาบน้ำ-แต่งตัวไม่ได้ เสี่ยงอับชื้น/ติดเชื้อผิวหนัง', cm: 'ตรวจผิวหนัง ช่องปาก และสอนการเช็ดตัวบนเตียงอย่างปลอดภัย', cg: 'เช็ดตัว/อาบน้ำ ดูแลช่องปาก ตัดเล็บ ซับข้อพับให้แห้งทุกวัน' });
+      if (adl.bladder < 2 || adl.bowels < 2 || adl.toilet < 2) rows.push({ domain: '4. ระบบขับถ่าย', adlRef: `Bladder=${adl.bladder}, Bowels=${adl.bowels}`, problem: 'มีปัญหากลั้นขับถ่าย/ใช้ห้องน้ำไม่ได้ เสี่ยง UTI และผื่นผ้าอ้อม', cm: 'เฝ้าระวังการติดเชื้อทางเดินปัสสาวะ และประสานขอรับสิทธิผ้าอ้อม กปท.', cg: 'เปลี่ยนผ้าอ้อม/ทำความสะอาดทันทีหลังขับถ่าย ทาครีมป้องกันความอับชื้น' });
+      rows.push({ domain: '5. ผู้ดูแลหลัก จิตใจ และสังคม', adlRef: `ผู้ดูแล: ${data.caregiverStatus || 'รอยืนยัน'}`, problem: 'เสี่ยงภาวะเครียดของผู้ดูแล (Caregiver Burden) และภาวะซึมเศร้าในผู้สูงอายุ', cm: 'ประเมิน 2Q/9Q และความเครียดผู้ดูแล ประสานสิทธิสวัสดิการ', cg: 'พูดคุยให้กำลังใจ กระตุ้นการรับรู้ และรายงาน CM เมื่อมีอาการผิดปกติ' });
+      return rows;
+    }
+
+    function loadCaseIntoWorkspace(dataObj) {
+      currentScanData = JSON.parse(JSON.stringify(dataObj));
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('resultWorkspace').classList.remove('hidden');
+      syncScannerEditorInputs();
+      renderScannerResults();
+    }
+
+    function renderScannerResults() {
+      if (!currentScanData) return;
+      const d = currentScanData;
+      const total = calculateTotalAdl(d.adl);
+      const sp = getSpecialPPInfo(total);
+      const ltc = getLtcGroupDetails(d.ltcGroup);
+      const diaper = evaluateDiaperEligibility(d, total);
+      const dispName = `${d.prefix ? d.prefix + ' ' : ''}${d.fullName || 'ไม่ระบุชื่อ'}`.trim();
+      const dispAddr = [d.houseNo ? `บ.${d.houseNo}` : '', d.moo ? `ม.${d.moo}` : '', d.subdistrict || ''].filter(Boolean).join(' ') || '(ยังไม่ระบุที่อยู่)';
+
+      document.getElementById('kpiName').textContent = dispName;
+      document.getElementById('kpiAgeAddress').textContent = `${d.age ? 'อายุ ' + d.age + ' ปี • ' : ''}${dispAddr}`;
+      document.getElementById('kpiTotalScore').textContent = String(total);
+      document.getElementById('kpiSpecialPPBadge').textContent = sp.code;
+      document.getElementById('kpiScoreBar').style.width = `${Math.max(5, (total / 20) * 100)}%`;
+      document.getElementById('kpiGroupLabel').textContent = `${sp.groupName} (${sp.range})`;
+      document.getElementById('kpiLtcGroupTitle').textContent = ltc.title;
+      document.getElementById('kpiLtcGroupDesc').textContent = ltc.shortDesc;
+      document.getElementById('kpiDiaperStatusPill').textContent = diaper.pill;
+      document.getElementById('kpiDiaperTitle').textContent = diaper.title;
+      document.getElementById('kpiDiaperReason').textContent = diaper.reason;
+      document.getElementById('clinicalAlertsList').innerHTML = buildClinicalAlerts(d, total).map(a => `<li>${a}</li>`).join('');
+      document.getElementById('editorLiveTotal').textContent = String(total);
+
+      const genRows = [
+        { f: 'คำนำหน้า / ชื่อ-สกุล', v: dispName, n: 'ตรวจตัวสะกดให้ตรงบัตรประชาชน' },
+        { f: 'เลขบัตร 13 หลัก', v: d.cid || '(ยังไม่ได้กรอก)', c: d.cid || '', n: 'ใช้ค้นหา/ลงทะเบียนใน 3C Plus+' },
+        { f: 'อายุ / สิทธิการรักษา', v: `${d.age ? d.age + ' ปี' : '-'} | ${d.healthRight || '-'}`, c: String(d.age || ''), n: 'ตรวจสอบสิทธิ สปสช.' },
+        { f: 'ที่อยู่และพิกัด GPS', v: `${dispAddr}${d.gps ? ' (' + d.gps + ')' : ''}`, c: d.gps || dispAddr, n: 'ใช้ปักหมุดแผนที่เยี่ยมบ้าน' },
+        { f: 'โรคประจำตัว', v: d.diseases || '(ยังไม่ระบุ)', c: d.diseases || '', n: 'สำคัญต่อการยืนยันกลุ่ม LTC' },
+        { f: 'รหัสคัดกรอง Special PP', v: `${sp.code} (${sp.groupName})`, c: sp.code, n: `คะแนน Barthel ADL = ${total}` },
+        { f: 'สถานะผู้ดูแลหลัก', v: `${d.caregiverStatus || '(เว้นว่าง)'} ${d.caregiverInfo || ''}`.trim(), c: d.caregiverStatus || '', n: 'ระบุเบอร์ติดต่อผู้ดูแล' },
+        { f: 'เงินสงเคราะห์ / ชมรม', v: `เบี้ยยังชีพ: ${d.welfare || 'เว้นว่าง'} | ชมรม: ${d.club || 'เว้นว่าง'}`, c: `${d.welfare} ${d.club}`, n: 'สอบถามญาติเพิ่มเติมหากเว้นว่าง' }
+      ];
+      document.getElementById('tablePart1General').innerHTML = genRows.map(r => `
+        <tr class="hover:bg-slate-50"><td class="px-4 py-2.5 font-bold text-slate-900">${escHtml(r.f)}</td><td class="px-4 py-2.5">${escHtml(r.v)}</td><td class="px-4 py-2.5 text-xs text-slate-600">${escHtml(r.n)}</td><td class="px-3 py-2 text-center no-print">${makeCopyBtn(r.c !== undefined ? r.c : r.v, r.f)}</td></tr>
+      `).join('');
+
+      document.getElementById('tableAdlSummaryPill').textContent = `รวม ${total} / 20 • ${sp.code}`;
+      document.getElementById('tablePart1Adl').innerHTML = BARTHEL_ITEMS.map(item => {
+        const sc = Number(d.adl[item.key]) || 0;
+        const opt = item.options.find(o => o.score === sc) || item.options[0];
+        return `<tr class="hover:bg-slate-50"><td class="px-3 py-2 text-center font-bold">${item.no}</td><td class="px-4 py-2"><div class="font-bold">${escHtml(item.en)}</div><div class="text-xs text-slate-500">${escHtml(item.shortTh)}</div></td><td class="px-4 py-2">${escHtml(opt.text)}</td><td class="px-3 py-2 text-center font-bold">${sc}</td><td class="px-3 py-2 text-center no-print">${makeCopyBtn(`${item.no}. ${item.en}: ${opt.text} (${sc} คะแนน)`, `ข้อ ${item.no}`)}</td></tr>`;
+      }).join('') + `<tr class="bg-slate-900 font-bold text-white"><td colspan="2" class="px-4 py-2.5 text-right">รวมคะแนน Barthel ADL</td><td class="px-4 py-2.5">${escHtml(sp.code)} — ${escHtml(sp.groupName)}</td><td class="px-3 py-2.5 text-center">${total}</td><td class="px-3 py-2.5 text-center no-print">${makeCopyBtn(`ADL รวม ${total} คะแนน (${sp.code})`, 'สรุป ADL')}</td></tr>`;
+
+      const structRows = [
+        { t: 'ประเภทกลุ่ม LTC', c: ltc.fullLabel },
+        { t: 'เป้าหมายหลักของแผน (Goal)', c: ltc.goal },
+        { t: 'ความถี่การเยี่ยมบ้าน', c: ltc.frequency },
+        { t: 'สิทธิผ้าอ้อมผู้ใหญ่ กปท. / อุปกรณ์', c: diaper.carePlanText }
+      ];
+      document.getElementById('tablePart2Structure').innerHTML = structRows.map(r => `
+        <tr class="hover:bg-slate-50"><td class="px-4 py-2.5 font-bold text-slate-900">${escHtml(r.t)}</td><td class="px-4 py-2.5">${escHtml(r.c)}</td><td class="px-3 py-2.5 text-center no-print">${makeCopyBtn(r.c, r.t)}</td></tr>
+      `).join('');
+
+      document.getElementById('tablePart2CarePlan').innerHTML = buildScannerCarePlanRows(d, total).map(r => `
+        <tr class="hover:bg-slate-50"><td class="px-4 py-3 font-bold">${escHtml(r.domain)}<div class="mt-1 text-[11px] font-normal text-blue-700">${escHtml(r.adlRef)}</div></td><td class="px-4 py-3"><div class="mb-1.5">${escHtml(r.problem)}</div>${makeCopyBtn(r.problem, 'ปัญหา ' + r.domain, true)}</td><td class="px-4 py-3 bg-blue-50/30"><div class="mb-1.5">${escHtml(r.cm)}</div>${makeCopyBtn(r.cm, 'กิจกรรม CM', true)}</td><td class="px-4 py-3 bg-teal-50/30"><div class="mb-1.5">${escHtml(r.cg)}</div>${makeCopyBtn(r.cg, 'กิจกรรม CG', true)}</td></tr>
+      `).join('');
+
+      const now = new Date();
+      document.getElementById('printTimestamp').textContent = `วันที่พิมพ์: ${now.toLocaleDateString('th-TH')} ${now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}`;
+      applyScanTabVisibility();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function applyScanTabVisibility() {
+      const p1 = document.getElementById('part1Section');
+      const p2 = document.getElementById('part2Section');
+      if (scanActiveTab === 'all') { p1.classList.remove('hidden'); p2.classList.remove('hidden'); }
+      else if (scanActiveTab === 'part1') { p1.classList.remove('hidden'); p2.classList.add('hidden'); }
+      else { p1.classList.add('hidden'); p2.classList.remove('hidden'); }
+    }
+
+    function syncScannerEditorInputs() {
+      if (!currentScanData) return;
+      const map = [['editPrefix','prefix'],['editFullName','fullName'],['editAge','age'],['editCid','cid'],['editHealthRight','healthRight'],['editHouseNo','houseNo'],['editMoo','moo'],['editSubdistrict','subdistrict'],['editGps','gps'],['editDiseases','diseases'],['editCaregiverStatus','caregiverStatus'],['editCaregiverInfo','caregiverInfo'],['editWelfare','welfare'],['editClub','club'],['editBladderMode','bladderMode'],['editLtcGroup','ltcGroup']];
+      map.forEach(([id, prop]) => { document.getElementById(id).value = currentScanData[prop] || ''; });
+      renderEditorAdlMatrix();
+    }
+
+    function renderEditorAdlMatrix() {
+      if (!currentScanData) return;
+      document.getElementById('editorAdlGrid').innerHTML = BARTHEL_ITEMS.map(item => {
+        const sel = Number(currentScanData.adl[item.key]) || 0;
+        const btns = item.options.map(opt => `
+          <button type="button" data-adl-key="${item.key}" data-adl-score="${opt.score}" class="w-full rounded-xl border px-3 py-1.5 text-left text-xs transition flex items-start gap-2 ${opt.score === sel ? 'border-slate-950 bg-blue-600 font-bold text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}">
+            <span class="rounded px-1.5 py-0.5 text-[11px] font-bold ${opt.score === sel ? 'bg-yellow-400 text-slate-950' : 'bg-slate-100'}">${opt.score}</span>
+            <span>${escHtml(opt.text)}</span>
+          </button>
+        `).join('');
+        return `<div class="rounded-2xl border border-slate-200 bg-slate-50 p-3 space-y-1.5"><div class="flex justify-between text-xs font-bold"><span>${item.no}. ${escHtml(item.en)} (${escHtml(item.shortTh)})</span><span>${sel}/${item.max}</span></div>${btns}</div>`;
+      }).join('');
+    }
+
+    async function handleScanFileInput(files) {
+      if (!files || !files.length) return;
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith('image/')) continue;
+        const reader = new FileReader();
+        await new Promise(res => {
+          reader.onload = e => {
+            const img = new Image();
+            img.onload = () => {
+              let w = img.width, h = img.height, maxD = 1600;
+              if (w > maxD || h > maxD) { if (w > h) { h = Math.round(h * maxD / w); w = maxD; } else { w = Math.round(w * maxD / h); h = maxD; } }
+              const c = document.createElement('canvas'); c.width = w; c.height = h;
+              c.getContext('2d').drawImage(img, 0, 0, w, h);
+              const dataUrl = c.toDataURL('image/jpeg', 0.86);
+              capturedImages.push({ id: 'img_' + Date.now() + Math.random().toString(36).slice(2, 6), dataUrl, base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
+              res();
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+      renderScanImagePreviews();
+      showToast(`เพิ่มภาพเอกสารแล้ว (รวม ${capturedImages.length} หน้า)`);
+    }
+
+    function renderScanImagePreviews() {
+      const box = document.getElementById('imagePreviewContainer');
+      const grid = document.getElementById('imageGrid');
+      document.getElementById('imageCountText').textContent = String(capturedImages.length);
+      if (!capturedImages.length) { box.classList.add('hidden'); grid.innerHTML = ''; return; }
+      box.classList.remove('hidden');
+      grid.innerHTML = capturedImages.map((img, i) => `
+        <div class="relative aspect-[3/4] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
+          <img src="${img.dataUrl}" data-lightbox-id="${img.id}" data-lightbox-page="${i + 1}" class="h-full w-full cursor-pointer object-cover" />
+          <span class="absolute left-2 top-2 rounded-md bg-slate-900 px-2 py-0.5 text-[11px] font-bold text-white">หน้า ${i + 1}</span>
+          <button type="button" data-remove-img="${img.id}" class="absolute right-2 top-2 h-6 w-6 rounded-lg bg-red-600 text-xs font-bold text-white">&times;</button>
+        </div>
+      `).join('');
+    }
+
+    async function startScanCamera() {
+      if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
+      document.getElementById('cameraErrorOverlay').classList.add('hidden');
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        document.getElementById('cameraErrorText').textContent = 'เบราว์เซอร์ไม่รองรับ WebRTC กรุณาใช้ปุ่มกล้องมือถือหรือคลังภาพแทน';
+        document.getElementById('cameraErrorOverlay').classList.remove('hidden');
+        return;
+      }
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: currentFacingMode } }, audio: false });
+        document.getElementById('cameraVideo').srcObject = cameraStream;
+      } catch (e) {
+        document.getElementById('cameraErrorText').textContent = 'ไม่สามารถเข้าถึงกล้องได้ กรุณาอนุญาตสิทธิ์กล้อง';
+        document.getElementById('cameraErrorOverlay').classList.remove('hidden');
+      }
+    }
+
+    function closeScanCamera() {
+      if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
+      document.getElementById('cameraModal').classList.add('hidden');
+      document.getElementById('cameraModal').classList.remove('flex');
+    }
+
+    async function analyzeCapturedImagesWithAI() {
+      if (!capturedImages.length) { showToast('กรุณาเพิ่มภาพอย่างน้อย 1 หน้า'); return; }
+      const overlay = document.getElementById('loadingOverlay');
+      const errBox = document.getElementById('apiErrorBox');
+      errBox.classList.add('hidden');
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+
+      const prompt = 'คุณคือผู้เชี่ยวชาญ LTC อ่านแบบประเมิน Barthel ADL ภาษาไทยจากภาพทั้งหมดแล้วตอบเป็น JSON: prefix, fullName, age (int), houseNo, moo, subdistrict, diseases, adl (feeding,grooming,transfer,toilet,mobility,dressing,stairs,bathing,bowels,bladder), caregiverStatus, welfare, club, documentTotalScore (int), aiNotes';
+      const parts = [{ text: prompt }, ...capturedImages.map(i => ({ inlineData: { mimeType: 'image/jpeg', data: i.base64 } }))];
+      const payload = { contents: [{ role: 'user', parts }], generationConfig: { responseMimeType: 'application/json' } };
+
+      try {
+        const apiKey = '';
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const raw = JSON.parse(data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}');
+        const adl = {};
+        BARTHEL_ITEMS.forEach(it => { adl[it.key] = Math.max(0, Math.min(it.max, parseInt(raw?.adl?.[it.key], 10) || 0)); });
+        const total = calculateTotalAdl(adl);
+        loadCaseIntoWorkspace({
+          id: 'case_' + Date.now(), prefix: raw.prefix || '', fullName: raw.fullName || 'ไม่ระบุชื่อ', age: parseInt(raw.age, 10) || '',
+          cid: '', healthRight: '', houseNo: raw.houseNo || '', moo: raw.moo || '', subdistrict: raw.subdistrict || '', gps: '',
+          diseases: raw.diseases || '', caregiverStatus: raw.caregiverStatus || '', caregiverInfo: '', welfare: raw.welfare || '', club: raw.club || '',
+          bladderMode: adl.bladder === 0 ? 'unconfirmed_incontinence' : 'normal', ltcGroup: total <= 4 ? 'group3' : (total <= 11 ? 'group1' : 'social'),
+          adl, aiNotes: raw.aiNotes || ''
+        });
+        showToast('วิเคราะห์เอกสาร Barthel ADL สำเร็จ');
+      } catch (err) {
+        document.getElementById('apiErrorMessage').textContent = 'ไม่สามารถเชื่อมต่อ Gemini Vision AI ได้ในขณะนี้ (' + err.message + ')';
+        errBox.classList.remove('hidden');
+      } finally {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('flex');
+      }
+    }
+
+    function getScanHistory() { try { return JSON.parse(localStorage.getItem(SCAN_STORAGE_KEY) || '[]'); } catch (e) { return []; } }
+    function updateScanHistoryBadge() { document.getElementById('historyBadge').textContent = String(getScanHistory().length); }
+    function renderScanHistoryDrawer() {
+      const list = getScanHistory();
+      const el = document.getElementById('historyList');
+      if (!list.length) { el.innerHTML = '<div class="py-10 text-center text-xs text-slate-500">ยังไม่มีประวัติเคสที่บันทึกไว้</div>'; return; }
+      el.innerHTML = list.map(it => `
+        <div class="rounded-2xl border border-slate-200 bg-white p-3 space-y-2">
+          <div class="flex justify-between font-bold text-sm"><span>${escHtml((it.prefix ? it.prefix + ' ' : '') + it.fullName)}</span><span class="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-800">ADL ${it.totalScore}</span></div>
+          <div class="flex gap-2">
+            <button type="button" data-load-history="${it.id}" class="flex-1 rounded-xl bg-slate-900 py-1.5 text-xs font-bold text-white">เปิดดูเคส</button>
+            <button type="button" data-del-history="${it.id}" class="rounded-xl bg-red-100 px-3 py-1.5 text-xs font-bold text-red-700">ลบ</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Wire Scanner events
+    updateScanHistoryBadge();
+    document.getElementById('inputMobileCamera').addEventListener('change', e => { handleScanFileInput(e.target.files); e.target.value = ''; });
+    document.getElementById('inputGalleryFiles').addEventListener('change', e => { handleScanFileInput(e.target.files); e.target.value = ''; });
+    document.getElementById('btnClearImages').addEventListener('click', () => { capturedImages = []; renderScanImagePreviews(); });
+    document.getElementById('btnCloseApiError').addEventListener('click', () => document.getElementById('apiErrorBox').classList.add('hidden'));
+    document.getElementById('btnOpenWebCamera').addEventListener('click', () => { const m = document.getElementById('cameraModal'); m.classList.remove('hidden'); m.classList.add('flex'); startScanCamera(); });
+    document.getElementById('btnCloseCamera').addEventListener('click', closeScanCamera);
+    document.getElementById('btnCloseCameraErr').addEventListener('click', closeScanCamera);
+    document.getElementById('btnCameraDone').addEventListener('click', closeScanCamera);
+    document.getElementById('btnSwitchCamera').addEventListener('click', () => { currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment'; startScanCamera(); });
+    document.getElementById('btnCapturePhoto').addEventListener('click', () => {
+      const v = document.getElementById('cameraVideo');
+      if (!v.videoWidth) return;
+      const c = document.getElementById('cameraCanvas'); c.width = v.videoWidth; c.height = v.videoHeight;
+      c.getContext('2d').drawImage(v, 0, 0);
+      const dataUrl = c.toDataURL('image/jpeg', 0.86);
+      capturedImages.push({ id: 'cam_' + Date.now(), dataUrl, base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
+      document.getElementById('cameraCapturedCount').textContent = String(capturedImages.length);
+      renderScanImagePreviews();
+    });
+    document.getElementById('btnCloseLightbox').addEventListener('click', () => { document.getElementById('lightboxModal').classList.add('hidden'); document.getElementById('lightboxModal').classList.remove('flex'); });
+    document.getElementById('btnAnalyzeAI').addEventListener('click', analyzeCapturedImagesWithAI);
+    document.getElementById('btnLoadSample').addEventListener('click', () => { loadCaseIntoWorkspace(SAMPLE_CASE_DATA); showToast('โหลดข้อมูลตัวอย่าง นางปาน นันทพันธ์ แล้ว'); });
+    document.getElementById('btnToggleEditor').addEventListener('click', () => document.getElementById('editorPanel').classList.toggle('hidden'));
+    document.getElementById('btnCloseEditor').addEventListener('click', () => document.getElementById('editorPanel').classList.add('hidden'));
+    document.getElementById('btnGetGps').addEventListener('click', () => {
+      if (!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(pos => {
+        const coord = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+        document.getElementById('editGps').value = coord;
+        if (currentScanData) { currentScanData.gps = coord; renderScannerResults(); }
+        showToast('ดึงพิกัด GPS แล้ว');
+      });
+    });
+
+    [['editPrefix','prefix'],['editFullName','fullName'],['editAge','age'],['editCid','cid'],['editHealthRight','healthRight'],['editHouseNo','houseNo'],['editMoo','moo'],['editSubdistrict','subdistrict'],['editGps','gps'],['editDiseases','diseases'],['editCaregiverStatus','caregiverStatus'],['editCaregiverInfo','caregiverInfo'],['editWelfare','welfare'],['editClub','club'],['editBladderMode','bladderMode'],['editLtcGroup','ltcGroup']].forEach(([id, prop]) => {
+      const el = document.getElementById(id);
+      el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', e => {
+        if (!currentScanData) return;
+        currentScanData[prop] = prop === 'age' ? (parseInt(e.target.value, 10) || '') : e.target.value;
+        renderScannerResults();
+      });
+    });
+
+    document.querySelectorAll('.scan-tab-btn').forEach(b => b.addEventListener('click', () => {
+      scanActiveTab = b.dataset.scanTab;
+      document.querySelectorAll('.scan-tab-btn').forEach(x => {
+        x.className = x.dataset.scanTab === scanActiveTab ? 'scan-tab-btn rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white' : 'scan-tab-btn rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700';
+      });
+      applyScanTabVisibility();
+    }));
+
+    document.getElementById('btnSaveCase').addEventListener('click', () => {
+      if (!currentScanData) return;
+      const list = getScanHistory().filter(x => x.id !== currentScanData.id);
+      list.unshift({ ...currentScanData, totalScore: calculateTotalAdl(currentScanData.adl), savedAt: new Date().toISOString() });
+      try { localStorage.setItem(SCAN_STORAGE_KEY, JSON.stringify(list.slice(0, 50))); } catch (e) {}
+      updateScanHistoryBadge();
+      showToast('บันทึกประวัติเคสแล้ว');
+    });
+
+    document.getElementById('btnCopyFullReport').addEventListener('click', () => {
+      if (!currentScanData) return;
+      const total = calculateTotalAdl(currentScanData.adl);
+      const sp = getSpecialPPInfo(total);
+      copyText(`${currentScanData.prefix} ${currentScanData.fullName} | ADL ${total}/20 (${sp.code} ${sp.groupName})`, 'สรุปผล ADL');
+    });
+
+    document.getElementById('btnScannerExportCsv').addEventListener('click', () => {
+      if (!currentScanData) return;
+      const total = calculateTotalAdl(currentScanData.adl);
+      const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const rows = [['ชื่อ-สกุล', `${currentScanData.prefix} ${currentScanData.fullName}`], ['คะแนนรวม ADL', total], ...BARTHEL_ITEMS.map(it => [it.en, currentScanData.adl[it.key]])];
+      const csv = '\uFEFF' + rows.map(r => r.map(esc).join(',')).join('\r\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+      a.download = `3CPlus_ADL_${currentScanData.fullName || 'case'}.csv`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      showToast('ส่งออก CSV เคสนี้แล้ว');
+    });
+
+    document.getElementById('btnPrintA4').addEventListener('click', () => { scanActiveTab = 'all'; applyScanTabVisibility(); window.print(); });
+    document.getElementById('btnOpenHistory').addEventListener('click', () => { renderScanHistoryDrawer(); const m = document.getElementById('historyModal'); m.classList.remove('hidden'); m.classList.add('flex'); });
+    document.getElementById('btnCloseHistory').addEventListener('click', () => { document.getElementById('historyModal').classList.add('hidden'); document.getElementById('historyModal').classList.remove('flex'); });
+
+    document.addEventListener('click', e => {
+      const rm = e.target.closest('[data-remove-img]');
+      if (rm) { capturedImages = capturedImages.filter(i => i.id !== rm.dataset.removeImg); renderScanImagePreviews(); return; }
+      const lb = e.target.closest('[data-lightbox-id]');
+      if (lb) {
+        const found = capturedImages.find(i => i.id === lb.dataset.lightboxId);
+        if (found) { document.getElementById('lightboxTitle').textContent = 'หน้าที่ ' + lb.dataset.lightboxPage; document.getElementById('lightboxImg').src = found.dataUrl; const m = document.getElementById('lightboxModal'); m.classList.remove('hidden'); m.classList.add('flex'); }
+        return;
+      }
+      const adlBtn = e.target.closest('[data-adl-key]');
+      if (adlBtn && currentScanData) {
+        currentScanData.adl[adlBtn.dataset.adlKey] = parseInt(adlBtn.dataset.adlScore, 10);
+        renderEditorAdlMatrix(); renderScannerResults(); return;
+      }
+      const lh = e.target.closest('[data-load-history]');
+      if (lh) {
+        const found = getScanHistory().find(x => x.id === lh.dataset.loadHistory);
+        if (found) { loadCaseIntoWorkspace(found); document.getElementById('historyModal').classList.add('hidden'); document.getElementById('historyModal').classList.remove('flex'); }
+        return;
+      }
+      const dh = e.target.closest('[data-del-history]');
+      if (dh) {
+        const list = getScanHistory().filter(x => x.id !== dh.dataset.delHistory);
+        try { localStorage.setItem(SCAN_STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
+        updateScanHistoryBadge(); renderScanHistoryDrawer();
+      }
+    });
+  </script>
+</body>
+</html>
