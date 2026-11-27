@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f7f7f4;
+  --fg: #0c0d10;
+  --muted: #8b8d94;
+  /* PLACEHOLDER accent — replace on the first build with a colour chosen for
+     what this app actually is. This is scaffold paint, not a brand. */
+  --accent: #ff5c35;
+  --accent-fg: #ffffff;
+  --border: #e8e8e3;
+  --surface: #ffffff;
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
