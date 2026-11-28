@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Activity, ArrowDownToLine, CalendarDays, CheckCircle2, ClipboardList, FilePlus2, HeartPulse, Home, LayoutDashboard, Menu, Plus, Search, ShieldCheck, Stethoscope, Users, UserRoundCheck, X } from "lucide-react";
 
-type Patient = { id: string; village: string; adl: number | null; cg: string; status: "ติดบ้าน" | "ติดเตียง" | "ติดสังคม" | "รอประเมิน"; planBudget: string; planActual: string; updatedAt: string };
+type Patient = { id: string; village: string; adl: number | null; adlItems: number[] | null; cg: string; status: "ติดบ้าน" | "ติดเตียง" | "ติดสังคม" | "รอประเมิน"; planBudget: string; planActual: string; updatedAt: string };
 type CG = { id: string; village: string; workload: string };
 type Visit = { id: string; patientId: string; date: string; result: string };
 type Tab = "dashboard" | "patients" | "careplan" | "cg" | "visits";
@@ -13,8 +13,20 @@ const tabs: { id: Tab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "cg", label: "ทะเบียน CG", icon: UserRoundCheck },
   { id: "visits", label: "เยี่ยมบ้าน", icon: CalendarDays },
 ];
-const blankPatient = (): Patient => ({ id: "", village: "", adl: null, cg: "", status: "รอประเมิน", planBudget: "", planActual: "", updatedAt: "" });
+const blankPatient = (): Patient => ({ id: "", village: "", adl: null, adlItems: null, cg: "", status: "รอประเมิน", planBudget: "", planActual: "", updatedAt: "" });
 const fmtDate = () => new Date().toLocaleDateString("th-TH");
+const ADL_ITEMS = [
+  { key: "feeding", label: "1. การรับประทานอาหาร", options: [{v:0,t:"ไม่สามารถตักอาหารเข้าปากได้ ต้องมีคนป้อน"},{v:5,t:"ต้องการความช่วยเหลือบางส่วน"},{v:10,t:"รับประทานได้เอง"}] },
+  { key: "grooming", label: "2. การล้างหน้า หวีผม แปรงฟัน โกนหนวด", options: [{v:0,t:"ต้องการความช่วยเหลือ"},{v:5,t:"ทำได้เอง"}] },
+  { key: "transfer", label: "3. การลุกจากที่นอนหรือเตียงไปยังเก้าอี้", options: [{v:0,t:"ไม่สามารถทำได้"},{v:5,t:"ต้องช่วยมาก/นั่งทรงตัวไม่ได้"},{v:10,t:"ต้องช่วยบ้าง"},{v:15,t:"ทำได้เอง"}] },
+  { key: "toilet", label: "4. การใช้ห้องน้ำ", options: [{v:0,t:"ช่วยเหลือตนเองไม่ได้"},{v:5,t:"ต้องช่วยบางส่วน"},{v:10,t:"ทำได้เอง"}] },
+  { key: "mobility", label: "5. การเคลื่อนที่ภายในห้องหรือบ้าน", options: [{v:0,t:"เคลื่อนที่ไม่ได้"},{v:5,t:"ใช้รถเข็นและช่วยตนเองได้บางส่วน"},{v:10,t:"เดินโดยมีผู้ช่วย/อุปกรณ์ช่วย"},{v:15,t:"เดินได้เอง"}] },
+  { key: "dressing", label: "6. การสวมใส่เสื้อผ้า", options: [{v:0,t:"ต้องช่วยทั้งหมด"},{v:5,t:"ช่วยบางส่วน"},{v:10,t:"ทำได้เอง"}] },
+  { key: "stairs", label: "7. การขึ้นลงบันได 1 ชั้น", options: [{v:0,t:"ไม่สามารถทำได้"},{v:5,t:"ต้องช่วยเหลือ"},{v:10,t:"ขึ้นลงได้เอง"}] },
+  { key: "bathing", label: "8. การอาบน้ำ", options: [{v:0,t:"ต้องมีคนช่วย"},{v:5,t:"อาบน้ำได้เอง"}] },
+  { key: "bowels", label: "9. การกลั้นการถ่ายอุจจาระ", options: [{v:0,t:"กลั้นไม่ได้/ต้องสวนอุจจาระ"},{v:5,t:"มีปัญหาบางครั้ง"},{v:10,t:"กลั้นได้ปกติ"}] },
+  { key: "bladder", label: "10. การกลั้นปัสสาวะ", options: [{v:0,t:"กลั้นไม่ได้/ใส่สายสวน"},{v:5,t:"มีปัญหาบางครั้ง"},{v:10,t:"กลั้นได้ปกติ"}] },
+];
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("dashboard");
@@ -67,6 +79,15 @@ export default function App() {
     const a = document.createElement("a"); a.href = url; a.download = "tongta-ltc-register.csv"; a.click(); URL.revokeObjectURL(url);
     setNotice("ส่งออก CSV แล้ว");
   }
+  function updateADLItems(index: number, score: number) {
+    if (!selected) return;
+    const next = [...(selected.adlItems ?? Array(10).fill(-1))];
+    next[index] = score;
+    const complete = next.every(v => v >= 0);
+    const total = complete ? next.reduce((sum, v) => sum + v, 0) : null;
+    const status: Patient["status"] = total === null ? "รอประเมิน" : total <= 4 ? "ติดเตียง" : total <= 11 ? "ติดบ้าน" : "ติดสังคม";
+    setPatients(old => old.map(p => p.id === selected.id ? { ...p, adlItems: next, adl: total, status, updatedAt: fmtDate() } : p));
+  }
   function updateADL(score: number | null) {
     if (!selected) return;
     const status: Patient["status"] = score === null ? "รอประเมิน" : score <= 4 ? "ติดเตียง" : score <= 11 ? "ติดบ้าน" : "ติดสังคม";
@@ -115,7 +136,13 @@ export default function App() {
           <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex flex-1 flex-wrap gap-2"><div className="relative min-w-[210px] flex-1"><Search size={16} className="absolute left-3 top-3 text-slate-400"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="ค้นหารหัสอ้างอิงหรือหมู่บ้าน" className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-blue-400"/></div><select value={filterVillage} onChange={e=>setFilterVillage(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 text-sm">{villages.map(v=><option key={v}>{v}</option>)}</select></div><button onClick={()=>{setDraft(blankPatient());setSelectedId("");setPatientForm(true);}} className="inline-flex items-center gap-2 rounded-xl bg-[#0b2b50] px-4 py-2.5 text-sm font-bold text-white"><FilePlus2 size={17}/> เพิ่มรายการ</button></div>
           {patientForm && <form onSubmit={savePatient} className="rounded-2xl border border-blue-200 bg-white p-5 shadow-sm"><div className="mb-4 flex items-center justify-between"><h3 className="font-bold text-[#0b2b50]">{selectedId?"แก้ไขทะเบียน":"เพิ่มทะเบียนผู้รับบริการ"}</h3><button type="button" onClick={()=>setPatientForm(false)}><X size={18}/></button></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><label className="field-label">รหัสอ้างอิง (ไม่ใช้ชื่อจริง)<input required value={draft.id} onChange={e=>setDraft({...draft,id:e.target.value})} placeholder="เช่น LTC-001" className="field-input"/></label><label className="field-label">หมู่บ้าน / หมู่ที่<input required value={draft.village} onChange={e=>setDraft({...draft,village:e.target.value})} placeholder="เช่น ม.1" className="field-input"/></label><label className="field-label">CG ผู้รับผิดชอบ<input value={draft.cg} onChange={e=>setDraft({...draft,cg:e.target.value})} placeholder="รหัส CG (ถ้ามี)" className="field-input"/></label></div><div className="mt-4 flex justify-end gap-2"><button type="button" onClick={()=>setPatientForm(false)} className="rounded-xl border px-4 py-2 text-sm">ยกเลิก</button><button className="rounded-xl bg-[#0b2b50] px-4 py-2 text-sm font-bold text-white">บันทึก</button></div></form>}
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 text-xs text-slate-500"><span>ทะเบียนผู้รับบริการ (ใช้รหัสแทนตัวบุคคล)</span><b>{filtered.length} รายการ</b></div><div className="overflow-x-auto"><table className="w-full min-w-[750px] text-left text-sm"><thead className="bg-slate-50 text-xs text-slate-500"><tr>{["รหัสอ้างอิง","หมู่บ้าน","ADL","กลุ่ม","CG","แก้ไข"].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody className="divide-y divide-slate-100">{filtered.map(p=><tr key={p.id} className="hover:bg-slate-50"><td className="px-4 py-3 font-bold text-[#0b2b50]">{p.id}</td><td className="px-4 py-3">{p.village}</td><td className="px-4 py-3">{p.adl ?? "รอประเมิน"}</td><td className="px-4 py-3"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs">{p.status}</span></td><td className="px-4 py-3">{p.cg||"—"}</td><td className="px-4 py-3"><button onClick={()=>editPatient(p)} className="font-semibold text-blue-700 hover:underline">แก้ไข / ADL</button></td></tr>)}</tbody></table></div>{!filtered.length && <div className="p-10 text-center"><Users size={30} className="mx-auto text-slate-300"/><p className="mt-3 font-semibold text-slate-600">ยังไม่มีข้อมูลในทะเบียน</p><p className="mt-1 text-xs text-slate-400">เพิ่มรายการโดยใช้รหัสอ้างอิงแทนชื่อจริง</p></div>}</div>
-          {selected && <div className="rounded-2xl border border-slate-200 bg-white p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs text-slate-400">กำลังประเมิน</p><h3 className="font-bold text-[#0b2b50]">{selected.id} · {selected.village}</h3></div><button onClick={()=>updateADL(null)} className="text-xs text-slate-500 underline">ล้างผลประเมิน</button></div><div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]"><div><label className="field-label">คะแนน Barthel ADL (0–20)<input type="number" min="0" max="20" value={selected.adl ?? ""} onChange={e=>updateADL(e.target.value===""?null:Math.max(0,Math.min(20,Number(e.target.value))))} placeholder="กรอกคะแนนรวม" className="field-input"/></label><p className="mt-2 text-[11px] text-slate-400">กรอกคะแนนรวมที่ประเมินจากแบบฟอร์มต้นฉบับ ระบบจัดกลุ่มเบื้องต้น: 0–4 ติดเตียง, 5–11 ติดบ้าน, 12–20 ติดสังคม ทั้งนี้ให้ยืนยันเกณฑ์กับแบบประเมิน/หน่วยงานก่อนใช้จริง</p></div><div className="flex items-end"><span className="rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800">{selected.status}</span></div></div></div>}
+          {selected && <div className="rounded-2xl border border-slate-200 bg-white p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs text-slate-400">แบบประเมิน Barthel ADL · 10 กิจกรรม</p><h3 className="font-bold text-[#0b2b50]">{selected.id} · {selected.village}</h3></div><button onClick={()=>{setPatients(old=>old.map(p=>p.id===selected.id?{...p,adl:null,adlItems:null,status:"รอประเมิน",updatedAt:fmtDate()}:p));}} className="text-xs text-slate-500 underline">ล้างผลประเมิน</button></div>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#f3f7fb] p-4"><div><p className="text-xs text-slate-500">คะแนนรวม</p><p className="text-3xl font-bold text-[#0b2b50]">{selected.adlItems?.every(v=>v>=0) ? selected.adl : "—"} <span className="text-sm font-medium text-slate-400">/ 100? </span></p></div><div className="rounded-xl bg-white px-4 py-3 text-sm font-bold text-blue-800">{selected.status}</div></div>
+            <p className="mt-2 text-[11px] text-slate-500">เลือกคะแนนตามแบบประเมินต้นฉบับ คะแนนแต่ละข้อรวมได้สูงสุด 100 คะแนนในชุดตัวเลือกนี้ ต้องตรวจสอบแบบประเมินมาตรฐานและเกณฑ์ของหน่วยงานก่อนใช้งานจริง</p>
+            <div className="mt-4 space-y-4">{ADL_ITEMS.map((item,index)=><section key={item.key} className="rounded-xl border border-slate-100 p-4"><h4 className="mb-3 text-sm font-bold text-[#0b2b50]">{item.label}</h4><div className="grid gap-2 sm:grid-cols-2">{item.options.map(option=><label key={option.v} className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-xs leading-5 ${selected.adlItems?.[index]===option.v?"border-blue-400 bg-blue-50 text-blue-900":"border-slate-200 hover:bg-slate-50"}`}><input type="radio" name={item.key} checked={selected.adlItems?.[index]===option.v} onChange={()=>updateADLItems(index,option.v)} className="mt-0.5 accent-blue-700"/><span><b className="mr-1">{option.v}</b>{option.t}</span></label>)}</div></section>)}</div>
+            <p className="mt-4 rounded-lg bg-amber-50 p-3 text-[11px] leading-5 text-amber-900">หมายเหตุ: ชุดคะแนนนี้เป็นโครงสร้างแบบร่างเพื่อพัฒนาฟังก์ชันเท่านั้น เนื่องจากคะแนนและเกณฑ์ Barthel ADL ที่ใช้จริงต้องยึดแบบฟอร์มของหน่วยงาน/คู่มือ 3C Plus+ ที่ได้รับอนุมัติ ก่อนใช้กับผู้รับบริการ</p>
+          </div>}
         </div>}
 
         {tab==="careplan" && <div className="space-y-4">
