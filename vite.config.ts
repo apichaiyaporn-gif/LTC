@@ -3,8 +3,8 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 /**
- * Dev-only: stamp every JSX opening tag with data-lp-src="file:line:col" so
- * Design Mode class-flip can map a clicked element back to source.
+ * Keep the existing Launchpad development-source annotation plugin.
+ * GitHub Pages serves this repository under /LTC/, so assets use that base.
  */
 function lpSrcAttr() {
   return ({ types: t }) => ({
@@ -13,17 +13,13 @@ function lpSrcAttr() {
       JSXOpeningElement(path, state) {
         const loc = path.node.loc;
         if (!loc) return;
-        /* Fragments accept only key and children — stamping them made React
-         * warn "Invalid prop data-lp-src" on every render, filling the
-         * console badge with our own noise. Covers Fragment and
-         * React.Fragment; the shorthand form never reaches this visitor. */
         const nameNode = path.node.name;
         const isFragment =
           (nameNode.type === "JSXIdentifier" && nameNode.name === "Fragment") ||
           (nameNode.type === "JSXMemberExpression" && nameNode.property.name === "Fragment");
         if (isFragment) return;
         const filename = state.filename || state.file?.opts?.filename || "";
-        const norm = String(filename).replace(/\\/g, "/");
+        const norm = String(filename).replace(/\\\\/g, "/");
         const idx = norm.lastIndexOf("/src/");
         if (idx === -1) return;
         const file = "src/" + norm.slice(idx + "/src/".length);
@@ -43,27 +39,14 @@ function lpSrcAttr() {
 }
 
 export default defineConfig({
+  base: "/LTC/",
   plugins: [
-    react({
-      babel: {
-        plugins: [lpSrcAttr()],
-      },
-    }),
+    react({ babel: { plugins: [lpSrcAttr()] } }),
     tailwindcss(),
   ],
   server: {
     host: true,
-    // The preview runs in an iframe on a different origin, so allow it.
     cors: true,
-    /* Vite 6 refuses any request whose Host header it doesn't recognise —
-     * DNS-rebinding protection — and answers "Blocked request. This host
-     * (...) is not allowed." The live preview is served from a per-sandbox
-     * hostname like sb-19vxzh639zu0.vercel.run, so without this the preview
-     * pane shows that message instead of the app, on every project.
-     *
-     * Listed rather than `true`: a leading dot matches subdomains, so the
-     * sandbox and preview domains are permitted and the protection still
-     * stands for everything else. */
     allowedHosts: [".vercel.run", ".vercel.app", "localhost", "127.0.0.1"],
   },
 });

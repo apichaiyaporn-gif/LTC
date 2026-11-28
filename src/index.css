@@ -1,28 +1,15 @@
+@import url("https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
-:root {
-  --bg: #f7f7f4;
-  --fg: #0c0d10;
-  --muted: #8b8d94;
-  /* PLACEHOLDER accent — replace on the first build with a colour chosen for
-     what this app actually is. This is scaffold paint, not a brand. */
-  --accent: #ff5c35;
-  --accent-fg: #ffffff;
-  --border: #e8e8e3;
-  --surface: #ffffff;
-  color-scheme: light;
-}
-
-html,
-body,
-#root {
-  min-height: 100%;
-}
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
+:root { font-family: "Sarabun", sans-serif; color: #1e293b; background: #f2f5fa; font-synthesis: none; text-rendering: optimizeLegibility; }
+* { box-sizing: border-box; }
+html, body, #root { min-height: 100%; margin: 0; }
+body { min-width: 320px; -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+.font-heading { font-family: "Prompt", sans-serif; }
+.field-label { display: flex; flex-direction: column; gap: 7px; color: #475569; font-size: 12px; font-weight: 600; }
+.field-input { width: 100%; border: 1px solid #dbe2ea; border-radius: 11px; background: #fff; padding: 10px 12px; color: #0f172a; font-size: 13px; outline: none; }
+.field-input:focus { border-color: #3973a8; box-shadow: 0 0 0 3px rgba(57,115,168,.10); }
+textarea { resize: vertical; }
+::selection { background: #d7e8f7; color: #071d3b; }
